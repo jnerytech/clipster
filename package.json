@@ -1,7 +1,7 @@
 {
   "name": "clipster",
   "displayName": "Clipster",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "A VS Code extension to copy paths, folder structures, and contents with customization.",
   "icon": "resources/icon.png",
   "activationEvents": [
@@ -96,12 +96,7 @@
         "clipster.showCreateFileFromClipboard": {
           "type": "boolean",
           "default": true,
-          "description": "Enable Create File from Clipboard."
-        },
-        "clipster.showCreateFolderFromClipboardPath": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable Create Folder from Clipboard Path."
+          "description": "Enable Create File or Folder from Clipboard Content."
         },
         "clipster.showInClipsterSubmenu": {
           "type": "boolean",
@@ -142,11 +137,7 @@
       },
       {
         "command": "clipster.createFileFromClipboard",
-        "title": "📄 Create File from Clipboard"
-      },
-      {
-        "command": "clipster.createFolderFromClipboardPath",
-        "title": "📂 Create Folder from Clipboard Path"
+        "title": "📄 Create File or Folder from Clipboard"
       }
     ],
     "submenus": [
@@ -183,9 +174,6 @@
         },
         {
           "command": "clipster.createFileFromClipboard"
-        },
-        {
-          "command": "clipster.createFolderFromClipboardPath"
         }
       ]
     }
