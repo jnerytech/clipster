@@ -1,5 +1,5 @@
 // File: src/extension.js
-// Version: 2.4.2
+// Version: 2.11.0
 
 const vscode = require("vscode");
 const {
@@ -24,17 +24,47 @@ const registerCommands = () => {
   disposables.forEach((disposable) => disposable.dispose());
   disposables = [];
 
-  // Register Copy File Content With Header
-  if (config.get("clipster.showCopyFileContentWithHeader", true)) {
+  // Register Create File or Folder from Clipboard
+  if (config.get("clipster.showCreateFileFromClipboard", true)) {
     disposables.push(
       vscode.commands.registerCommand(
-        "clipster.copyFileContentWithHeader",
+        "clipster.createFileFromClipboard",
         async (uri) => {
-          const result = await copyFileContentWithPath(uri);
-          await copyToClipboard(
-            result,
-            "📝 File content with path copied successfully!"
-          );
+          const clipboardContent = await vscode.env.clipboard.readText();
+
+          // Split and process clipboard content
+          const lines = clipboardContent
+            .split(/\r?\n/)
+            .map((line) => line.trim())
+            .filter((line) => line.length > 0);
+
+          if (lines.length === 0) {
+            vscode.window.showErrorMessage(
+              "Clipboard is empty or contains only whitespace."
+            );
+            return;
+          }
+
+          // If multiple lines, ask for confirmation
+          if (lines.length > 1) {
+            const confirmation = await vscode.window.showWarningMessage(
+              `You are about to create ${lines.length} items. Do you want to proceed?`,
+              { modal: true },
+              "Yes",
+              "No"
+            );
+
+            if (confirmation !== "Yes") {
+              vscode.window.showInformationMessage("Operation cancelled.");
+              return;
+            }
+          }
+
+          try {
+            await createFileOrFolderFromClipboard(clipboardContent, uri);
+          } catch (err) {
+            vscode.window.showErrorMessage(`Failed to create: ${err.message}`);
+          }
         }
       )
     );
@@ -116,21 +146,21 @@ const registerCommands = () => {
     );
   }
 
-  // Register Create File or Folder from Clipboard
-  disposables.push(
-    vscode.commands.registerCommand(
-      "clipster.createFileFromClipboard",
-      async (uri) => {
-        const clipboardContent = await vscode.env.clipboard.readText();
-
-        try {
-          await createFileOrFolderFromClipboard(clipboardContent, uri);
-        } catch (err) {
-          vscode.window.showErrorMessage(`Failed to create: ${err.message}`);
+  // Register Copy File Content With Header
+  if (config.get("clipster.showCopyFileContentWithHeader", true)) {
+    disposables.push(
+      vscode.commands.registerCommand(
+        "clipster.copyFileContentWithHeader",
+        async (uri) => {
+          const result = await copyFileContentWithPath(uri);
+          await copyToClipboard(
+            result,
+            "📝 File content with path copied successfully!"
+          );
         }
-      }
-    )
-  );
+      )
+    );
+  }
 };
 
 // Activation function

@@ -1,12 +1,11 @@
 // File: src/fileHelpers.js
-// Version: 2.10.0
+// Version: 2.11.0
 
 import * as vscode from "vscode";
 import path from "path";
 import os from "os";
 import fs from "fs";
 import {
-  // Removed imports of isFolder, isFile, isFullPath, isRelativePath
   normalizeClipboardContent,
   getBaseDirectory,
   resolveTargetPath,
@@ -91,7 +90,7 @@ export const createFileOrFolderFromClipboard = async (
   clipboardContent,
   uri
 ) => {
-  // Split clipboard content into lines
+  // Split clipboard content into lines and filter out empty lines
   const lines = clipboardContent
     .split(/\r?\n/)
     .map((line) => line.trim())
@@ -110,14 +109,26 @@ export const createFileOrFolderFromClipboard = async (
 
   let filesCreated = 0;
   let foldersCreated = 0;
+  let errorsOccurred = 0;
 
-  for (const line of lines) {
+  // Use a Set to avoid processing duplicate paths
+  const uniqueLines = new Set(lines);
+
+  for (const line of uniqueLines) {
     // Normalize the clipboard content to handle slashes
     const clipboardLine = normalizeClipboardContent(line);
+
+    // Validate the clipboardLine for invalid characters
+    if (!isValidPath(clipboardLine)) {
+      showErrorMessage(`Invalid path: '${clipboardLine}'`);
+      errorsOccurred++;
+      continue;
+    }
 
     // Determine the target path
     const targetPath = resolveTargetPath(clipboardLine, baseDir);
     if (!targetPath) {
+      errorsOccurred++;
       continue; // Error message is handled inside resolveTargetPath
     }
 
@@ -138,6 +149,7 @@ export const createFileOrFolderFromClipboard = async (
 
     // Create directories recursively
     if (!createDirectoriesRecursively(path.dirname(targetPath))) {
+      errorsOccurred++;
       continue; // Error message is handled inside createDirectoriesRecursively
     }
 
@@ -152,6 +164,7 @@ export const createFileOrFolderFromClipboard = async (
         );
       } catch (err) {
         showErrorMessage(`Failed to create folder: ${err.message}`);
+        errorsOccurred++;
       }
     } else {
       // Create file
@@ -162,21 +175,28 @@ export const createFileOrFolderFromClipboard = async (
         showInformationMessage(`📄 File '${targetPath}' created successfully!`);
       } catch (err) {
         showErrorMessage(`Failed to create file: ${err.message}`);
+        errorsOccurred++;
       }
     }
   }
 
   // Show a notification summarizing the results
-  if (filesCreated > 0 || foldersCreated > 0) {
-    showInformationMessage(
-      `✨ Created ${filesCreated} file(s) and ${foldersCreated} folder(s).`
-    );
-  } else {
-    showInformationMessage("No files or folders were created.");
+  let summaryMessage = `✨ Created ${filesCreated} file(s) and ${foldersCreated} folder(s).`;
+  if (errorsOccurred > 0) {
+    summaryMessage += ` ${errorsOccurred} item(s) could not be created due to errors.`;
   }
+  showInformationMessage(summaryMessage);
 };
 
-// Public helper functions (must remain unchanged)
+// Helper function to validate path for invalid characters
+const isValidPath = (filePath) => {
+  const baseName = path.basename(filePath);
+  const invalidChars =
+    process.platform === "win32" ? /[<>:"/\\|?*\x00-\x1F]/g : /[\/\x00]/g;
+  return !invalidChars.test(baseName);
+};
+
+// Public helper functions
 
 // Function to check if clipboard content represents a folder
 export const isFolder = (clipboardContent) => {
