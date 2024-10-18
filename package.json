@@ -160,27 +160,27 @@
         },
         {
           "command": "clipster.copyFolderStructure",
-          "group": "_2_copy"
+          "group": "2_copy"
         },
         {
           "command": "clipster.copyFolderStructureAndContent",
           "group": "2_copy"
         },
         {
+          "command": "clipster.copyFileContentWithHeader",
+          "group": "2_copy"
+        },
+        {
           "command": "clipster.copyRootFolderPath",
-          "group": "_3_copyRoot"
+          "group": "3_copyRoot"
         },
         {
           "command": "clipster.copyRootFolderStructure",
           "group": "3_copyRoot"
         },
         {
-          "command": "clipster.copyFileContentWithHeader",
-          "group": "_4_copyFile"
-        },
-        {
           "command": "clipster.copyRootFolderStructureAndContent",
-          "group": "4_copyFile"
+          "group": "3_copyRoot"
         }
       ]
     }

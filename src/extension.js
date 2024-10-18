@@ -116,23 +116,12 @@ const registerCommands = () => {
     );
   }
 
-  // Register Create File from Clipboard
+  // Register Create File or Folder from Clipboard
   disposables.push(
     vscode.commands.registerCommand(
       "clipster.createFileFromClipboard",
       async (uri) => {
         const clipboardContent = await vscode.env.clipboard.readText();
-
-        // Check if clipboard content is multi-line
-        if (
-          clipboardContent.includes("\n") ||
-          clipboardContent.includes("\r")
-        ) {
-          vscode.window.showErrorMessage(
-            "Clipboard content contains multiple lines. Please use a single-line file or folder name."
-          );
-          return;
-        }
 
         try {
           await createFileOrFolderFromClipboard(clipboardContent, uri);

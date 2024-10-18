@@ -1,5 +1,5 @@
 // File: src/fileHelpers.js
-// Version: 2.9.0
+// Version: 2.10.0
 
 import * as vscode from "vscode";
 import path from "path";
@@ -86,21 +86,21 @@ export const copyRootFolderStructure = (additionalIgnores = []) => {
     : "No workspace root found.";
 };
 
-// Function to create a file or folder from clipboard content
+// Function to create files or folders from clipboard content
 export const createFileOrFolderFromClipboard = async (
   clipboardContent,
   uri
 ) => {
-  // Check if clipboard content contains multiple lines
-  if (clipboardContent.includes("\n") || clipboardContent.includes("\r")) {
-    showErrorMessage(
-      "Clipboard content contains multiple lines. Please use a single-line file or folder name."
-    );
+  // Split clipboard content into lines
+  const lines = clipboardContent
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+
+  if (lines.length === 0) {
+    showErrorMessage("Clipboard is empty or contains only whitespace.");
     return;
   }
-
-  // Normalize the clipboard content to handle slashes
-  clipboardContent = normalizeClipboardContent(clipboardContent);
 
   // Determine the base directory where the user right-clicked
   const baseDir = getBaseDirectory(uri);
@@ -108,50 +108,71 @@ export const createFileOrFolderFromClipboard = async (
     return; // Error message is handled inside getBaseDirectory
   }
 
-  // Determine the target path
-  const targetPath = resolveTargetPath(clipboardContent, baseDir);
-  if (!targetPath) {
-    return; // Error message is handled inside resolveTargetPath
-  }
+  let filesCreated = 0;
+  let foldersCreated = 0;
 
-  // Check if the target path exists
-  if (fs.existsSync(targetPath)) {
-    const stat = fs.statSync(targetPath);
-    if (stat.isFile()) {
-      // Open the file
-      await openFileInEditor(targetPath);
-      showInformationMessage(
-        `📄 File '${targetPath}' already exists and was opened.`
-      );
-    } else if (stat.isDirectory()) {
-      showInformationMessage(`📂 Folder '${targetPath}' already exists.`);
+  for (const line of lines) {
+    // Normalize the clipboard content to handle slashes
+    const clipboardLine = normalizeClipboardContent(line);
+
+    // Determine the target path
+    const targetPath = resolveTargetPath(clipboardLine, baseDir);
+    if (!targetPath) {
+      continue; // Error message is handled inside resolveTargetPath
     }
-    return;
-  }
 
-  // Create directories recursively
-  if (!createDirectoriesRecursively(path.dirname(targetPath))) {
-    return; // Error message is handled inside createDirectoriesRecursively
-  }
-
-  // Determine if it's a file or folder
-  if (isFolder(clipboardContent)) {
-    // Create folder
-    try {
-      fs.mkdirSync(targetPath, { recursive: true });
-      showInformationMessage(`📂 Folder '${targetPath}' created successfully!`);
-    } catch (err) {
-      showErrorMessage(`Failed to create folder: ${err.message}`);
+    // Check if the target path exists
+    if (fs.existsSync(targetPath)) {
+      const stat = fs.statSync(targetPath);
+      if (stat.isFile()) {
+        // Open the file
+        await openFileInEditor(targetPath);
+        showInformationMessage(
+          `📄 File '${targetPath}' already exists and was opened.`
+        );
+      } else if (stat.isDirectory()) {
+        showInformationMessage(`📂 Folder '${targetPath}' already exists.`);
+      }
+      continue;
     }
+
+    // Create directories recursively
+    if (!createDirectoriesRecursively(path.dirname(targetPath))) {
+      continue; // Error message is handled inside createDirectoriesRecursively
+    }
+
+    // Determine if it's a file or folder
+    if (isFolder(clipboardLine)) {
+      // Create folder
+      try {
+        fs.mkdirSync(targetPath, { recursive: true });
+        foldersCreated++;
+        showInformationMessage(
+          `📂 Folder '${targetPath}' created successfully!`
+        );
+      } catch (err) {
+        showErrorMessage(`Failed to create folder: ${err.message}`);
+      }
+    } else {
+      // Create file
+      try {
+        fs.writeFileSync(targetPath, "");
+        await openFileInEditor(targetPath);
+        filesCreated++;
+        showInformationMessage(`📄 File '${targetPath}' created successfully!`);
+      } catch (err) {
+        showErrorMessage(`Failed to create file: ${err.message}`);
+      }
+    }
+  }
+
+  // Show a notification summarizing the results
+  if (filesCreated > 0 || foldersCreated > 0) {
+    showInformationMessage(
+      `✨ Created ${filesCreated} file(s) and ${foldersCreated} folder(s).`
+    );
   } else {
-    // Create file
-    try {
-      fs.writeFileSync(targetPath, "");
-      await openFileInEditor(targetPath);
-      showInformationMessage(`📄 File '${targetPath}' created successfully!`);
-    } catch (err) {
-      showErrorMessage(`Failed to create file: ${err.message}`);
-    }
+    showInformationMessage("No files or folders were created.");
   }
 };
 
