@@ -1,3 +1,6 @@
+// File: src/extension.js
+// Version: 2.4.2
+
 const vscode = require("vscode");
 const {
   getFolderStructure,
@@ -5,6 +8,7 @@ const {
   copyRootFolderPath,
   copyRootFolderStructure,
   copyFileContentWithPath,
+  createFileOrFolderFromClipboard,
 } = require("./fileHelpers.js");
 const { copyToClipboard } = require("./clipboardHelper.js");
 
@@ -111,6 +115,33 @@ const registerCommands = () => {
       )
     );
   }
+
+  // Register Create File from Clipboard
+  disposables.push(
+    vscode.commands.registerCommand(
+      "clipster.createFileFromClipboard",
+      async (uri) => {
+        const clipboardContent = await vscode.env.clipboard.readText();
+
+        // Check if clipboard content is multi-line
+        if (
+          clipboardContent.includes("\n") ||
+          clipboardContent.includes("\r")
+        ) {
+          vscode.window.showErrorMessage(
+            "Clipboard content contains multiple lines. Please use a single-line file or folder name."
+          );
+          return;
+        }
+
+        try {
+          await createFileOrFolderFromClipboard(clipboardContent, uri);
+        } catch (err) {
+          vscode.window.showErrorMessage(`Failed to create: ${err.message}`);
+        }
+      }
+    )
+  );
 };
 
 // Activation function

@@ -93,11 +93,6 @@
           "default": true,
           "description": "Enable Copy Root Folder Structure and Content."
         },
-        "clipster.showCreateFileFromClipboard": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable Create File or Folder from Clipboard Content."
-        },
         "clipster.showInClipsterSubmenu": {
           "type": "boolean",
           "default": true,
@@ -107,6 +102,11 @@
           "type": "array",
           "default": [],
           "description": "Additional file patterns to ignore when copying folder structures."
+        },
+        "clipster.showCreateFileFromClipboard": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Create File or Folder from Clipboard Content."
         }
       }
     },
@@ -137,7 +137,7 @@
       },
       {
         "command": "clipster.createFileFromClipboard",
-        "title": "📄 Create File or Folder from Clipboard"
+        "title": "📋 Create File or Folder from Clipboard"
       }
     ],
     "submenus": [
@@ -155,25 +155,32 @@
       ],
       "clipsterMenu": [
         {
-          "command": "clipster.copyFileContentWithHeader"
+          "command": "clipster.copyFileContentWithHeader",
+          "group": "1_copy"
         },
         {
-          "command": "clipster.copyFolderStructure"
+          "command": "clipster.copyFolderStructure",
+          "group": "1_copy"
         },
         {
-          "command": "clipster.copyFolderStructureAndContent"
+          "command": "clipster.copyFolderStructureAndContent",
+          "group": "1_copy"
         },
         {
-          "command": "clipster.copyRootFolderPath"
+          "command": "clipster.copyRootFolderPath",
+          "group": "2_copyRoot"
         },
         {
-          "command": "clipster.copyRootFolderStructure"
+          "command": "clipster.copyRootFolderStructure",
+          "group": "2_copyRoot"
         },
         {
-          "command": "clipster.copyRootFolderStructureAndContent"
+          "command": "clipster.copyRootFolderStructureAndContent",
+          "group": "2_copyRoot"
         },
         {
-          "command": "clipster.createFileFromClipboard"
+          "command": "clipster.createFileFromClipboard",
+          "group": "_3_create"
         }
       ]
     }

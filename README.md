@@ -1,6 +1,6 @@
 # Clipster
 
-A minimal VS Code extension to copy file paths, folder structures, and contents from file explorer to the clipboard so that it can be shared with ChatGPT, Gemini, Perplexity, or even real humans 😊. Feedback === ❤️
+A minimal VS Code extension to copy file paths, folder structures, and contents from the file explorer to the clipboard so that it can be shared with ChatGPT, Gemini, Perplexity, or even real humans 😊. Feedback === ❤️
 
 ## Features
 
@@ -10,13 +10,22 @@ A minimal VS Code extension to copy file paths, folder structures, and contents 
 - 📁 **Copy Root Folder Structure**: Copies the root folder's structure without file contents.
 - 📝 **Copy File Content with Path**: Copies both the file's content and its full path to the clipboard.
 - 📝 **Copy Root Folder Structure and Content**: Copies the root folder's structure along with all file contents.
+- 📋 **Create File or Folder from Clipboard**: Creates a new file or folder based on the path in your clipboard.
 
 ## Usage
 
 1. **Right-click** on any file or folder in the VS Code explorer.
 2. **Select** one of the options from the **Clipster** menu.
 
-The copied information will be available in your clipboard in a visually appealing format.
+### Creating a File or Folder from Clipboard
+
+To create a file or folder from clipboard content:
+
+1. **Copy** the path of the file or folder you wish to create to your clipboard. This can be an absolute path, a relative path, or just a file/folder name.
+2. **Right-click** on the directory in the VS Code explorer where you want to create the new file or folder.
+3. **Select** **📋 Create File or Folder from Clipboard** from the **Clipster** menu.
+
+The extension will create the file or folder at the specified path, relative to the location where you right-clicked, and open it in VS Code if it's a file.
 
 ## Example
 
@@ -48,6 +57,7 @@ You can customize Clipster's behavior through the following settings in the VS C
 - **Clipster: Show Copy Root Folder Path** (`clipster.showCopyRootFolderPath`): Enable or disable copying the root folder path.
 - **Clipster: Show Copy Root Folder Structure** (`clipster.showCopyRootFolderStructure`): Enable or disable copying the root folder structure.
 - **Clipster: Show Copy Root Folder Structure and Content** (`clipster.showCopyRootFolderStructureAndContent`): Enable or disable copying the root folder structure along with content.
+- **Clipster: Show Create File from Clipboard** (`clipster.showCreateFileFromClipboard`): Enable or disable creating a file or folder from clipboard content.
 - **Clipster: Show in Clipster Submenu** (`clipster.showInClipsterSubmenu`): Show Clipster commands in a submenu or directly in the root menu.
 - **Clipster: Additional Ignores** (`clipster.additionalIgnores`): Add custom file patterns to ignore when copying folder structures.
 
