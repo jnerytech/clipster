@@ -2,6 +2,8 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.0.27](https://github.com/TheJesper/clipster/compare/v1.0.26...v1.0.27) (2024-10-18)
+
 ### [1.0.26](https://github.com/TheJesper/clipster/compare/v1.0.25...v1.0.26) (2024-10-18)
 
 ### [1.0.25](https://github.com/TheJesper/clipster/compare/v1.0.24...v1.0.25) (2024-10-18)
