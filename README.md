@@ -90,4 +90,4 @@ Run `npm run clean-build-install` to build and install the extension locally.
 
 This project is licensed under the MIT License.
 
-**Disclaimer**: Due to frustration, all features might not be fully ready 😒. Please provide feedback to help us improve 🤙.
+**Disclaimer**: Please provide feedback to help us improve 🤙
