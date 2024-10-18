@@ -5,11 +5,11 @@ A minimal VS Code extension to copy file paths, folder structures, and contents 
 ## Features
 
 - 📋 **Create File or Folder from Clipboard**: Creates one or multiple files or folders based on the paths in your clipboard.
-  <br><br>
+
 - 📁 **Copy Folder Structure**: Copies the folder structure without including file contents.
 - 📁 **Copy Folder Structure and Content**: Copies the folder structure along with file contents.
 - 📝 **Copy File Content with Path**: Copies both the file's content and its full path to the clipboard.
-  <br><br>
+
 - 📁 **Copy Root Folder Path**: Copies the path of the root folder.
 - 📁 **Copy Root Folder Structure**: Copies the root folder's structure without file contents.
 - 📝 **Copy Root Folder Structure and Content**: Copies the root folder's structure along with all file contents.
@@ -26,8 +26,27 @@ To create one or multiple files or folders from clipboard content:
 1. **Copy** the paths of the files or folders you wish to create to your clipboard. Each path should be on a new line for multiple items.
 2. **Right-click** on the directory in the VS Code explorer where you want to create the new files or folders.
 3. **Select** **📋 Create File or Folder from Clipboard** from the **Clipster** menu.
+4. **Confirm** the action when prompted.
+
+**Note:** When your clipboard contains multiple lines, Clipster will ask for confirmation before proceeding to create the files or folders. This is to prevent accidental creation from unintended clipboard content.
 
 The extension will create the files or folders at the specified paths, relative to the location where you right-clicked, and open any created files in VS Code.
+
+### Copying Folder Structures and Contents
+
+- **Copy Folder Structure**: Copies the folder structure of the selected directory without including file contents.
+
+- **Copy Folder Structure and Content**: Copies the folder structure along with the contents of all files.
+
+- **Copy File Content with Path**: Copies the content of the selected file along with its full path.
+
+### Copying Root Folder Information
+
+- **Copy Root Folder Path**: Copies the path of the root folder of your workspace.
+
+- **Copy Root Folder Structure**: Copies the root folder's structure without file contents.
+
+- **Copy Root Folder Structure and Content**: Copies the root folder's structure along with all file contents.
 
 ## Example
 
@@ -57,10 +76,10 @@ You can customize Clipster's behavior through the following settings in the VS C
 
 - **Clipster: Show Copy Folder Structure** (`clipster.showCopyFolderStructure`): Enable or disable copying the folder structure.
 - **Clipster: Show Copy Folder Structure and Content** (`clipster.showCopyFolderStructureAndContent`): Enable or disable copying the folder structure along with content.
+- **Clipster: Show Copy File Content with Path** (`clipster.showCopyFileContentWithHeader`): Enable or disable copying file content with the path.
+
 - **Clipster: Show Copy Root Folder Path** (`clipster.showCopyRootFolderPath`): Enable or disable copying the root folder path.
 - **Clipster: Show Copy Root Folder Structure** (`clipster.showCopyRootFolderStructure`): Enable or disable copying the root folder structure.
-
-- **Clipster: Show Copy File Content with Path** (`clipster.showCopyFileContentWithHeader`): Enable or disable copying file content with the path.
 - **Clipster: Show Copy Root Folder Structure and Content** (`clipster.showCopyRootFolderStructureAndContent`): Enable or disable copying the root folder structure along with content.
 
 - **Clipster: Show in Clipster Submenu** (`clipster.showInClipsterSubmenu`): Show Clipster commands in a submenu or directly in the root menu.
