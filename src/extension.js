@@ -165,11 +165,6 @@ const registerCommands = () => {
 
 // Activation function
 function activate(context) {
-  console.log("Activating Clipster...");
-  vscode.window.showInformationMessage(
-    "Clipster extension activated successfully!"
-  );
-
   // Register initial commands based on current configuration
   registerCommands();
 

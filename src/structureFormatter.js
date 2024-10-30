@@ -1,3 +1,4 @@
+// src\structureFormatter.js 0.0.1
 import os from "os";
 
 // Helper to format folder and file structure with icons and appropriate lines

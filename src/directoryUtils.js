@@ -1,4 +1,4 @@
-// File: directoryUtils.js
+// File: directoryUtils.js 0.0.1
 
 import fs from "fs";
 import path from "path";
@@ -49,7 +49,7 @@ export const traverseDirectory = (
       path.join(dir, directory),
       workspaceRoot,
       additionalIgnores,
-      `${indent}${isLastDir ? "  " : "┓ "}`,
+      `${indent}${isLastDir ? "  " : "┃ "}`,
       isLastDir
     );
   });
