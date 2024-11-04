@@ -1,19 +1,11 @@
 {
   "name": "clipster",
   "displayName": "Clipster",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "A VS Code extension to copy paths, folder structures, and contents with customization.",
   "icon": "resources/icon.png",
   "activationEvents": [
-    "onStartupFinished",
-    "onCommand:clipster.createFileFromClipboard",
-    "onCommand:clipster.copyFileContentWithHeader",
-    "onCommand:clipster.copyFolderStructure",
-    "onCommand:clipster.copyFolderStructureAndContent",
-    "onCommand:clipster.copyRootFolderPath",
-    "onCommand:clipster.copyRootFolderStructure",
-    "onCommand:clipster.copyRootFolderStructureAndContent",
-    "onCommand:clipster.copyFilesContentWithPaths"
+    "onStartupFinished"
   ],
   "main": "./dist/extension.js",
   "repository": {
@@ -60,5 +52,170 @@
     "ignore": "^6.0.2",
     "picomatch": "^4.0.2"
   },
-  "contributes": "added by buildscript"
+  "contributes": {
+    "configuration": {
+      "type": "object",
+      "title": "Clipster Settings",
+      "properties": {
+        "clipster.showCreateFileFromClipboard": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Create File or Folder from Clipboard Content."
+        },
+        "clipster.showCreateFileWithContent": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Create File with Path from First Row and File Content."
+        },
+        "clipster.showCopyFilesContentWithPaths": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Copy Content of Multiple Files with Paths from Clipboard."
+        },
+        "clipster.showCopyFolderStructure": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Copy Folder Structure."
+        },
+        "clipster.showCopyFolderStructureAndContent": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Copy Folder Structure and Content."
+        },
+        "clipster.showCopyRootFolderPath": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Copy Root Folder Path."
+        },
+        "clipster.showCopyRootFolderStructure": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Copy Root Folder Structure."
+        },
+        "clipster.showCopyFileContentWithHeader": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Copy File Content with Path."
+        },
+        "clipster.showCopyRootFolderStructureAndContent": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Copy Root Folder Structure and Content."
+        },
+        "clipster.showHelpOption": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Clipster Help Summary Option."
+        },
+        "clipster.showInClipsterSubmenu": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show Clipster commands in submenu."
+        },
+        "clipster.additionalIgnores": {
+          "type": "array",
+          "default": [],
+          "description": "Additional file patterns to ignore when copying folder structures."
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "clipster.createFileFromClipboard",
+        "title": "📋 Create File(s) or Folder(s) from Clipboard"
+      },
+      {
+        "command": "clipster.createFileWithContent",
+        "title": "📝 Create File with Content from Clipboard"
+      },
+      {
+        "command": "clipster.copyFilesContentWithPaths",
+        "title": "📄 Copy File(s) Content with Path(s)"
+      },
+      {
+        "command": "clipster.copyFolderStructure",
+        "title": "📁 Copy Folder Structure"
+      },
+      {
+        "command": "clipster.copyFolderStructureAndContent",
+        "title": "📁 Copy Folder Structure and Content"
+      },
+      {
+        "command": "clipster.copyRootFolderPath",
+        "title": "📁 Copy Root Folder Path"
+      },
+      {
+        "command": "clipster.copyRootFolderStructure",
+        "title": "📁 Copy Root Folder Structure"
+      },
+      {
+        "command": "clipster.copyFileContentWithHeader",
+        "title": "📝 Copy File Content with Path"
+      },
+      {
+        "command": "clipster.copyRootFolderStructureAndContent",
+        "title": "📝 Copy Root Folder Structure and Content"
+      },
+      {
+        "command": "clipster.showHelp",
+        "title": "ℹ️ Clipster Help Summary"
+      }
+    ],
+    "submenus": [
+      {
+        "id": "clipsterMenu",
+        "label": "Clipster 📁"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "submenu": "clipsterMenu",
+          "group": "_navigation"
+        }
+      ],
+      "clipsterMenu": [
+        {
+          "command": "clipster.createFileFromClipboard",
+          "group": "1_create"
+        },
+        {
+          "command": "clipster.createFileWithContent",
+          "group": "1_create"
+        },
+        {
+          "command": "clipster.copyFilesContentWithPaths",
+          "group": "1_create"
+        },
+        {
+          "command": "clipster.copyFolderStructure",
+          "group": "2_copy"
+        },
+        {
+          "command": "clipster.copyFolderStructureAndContent",
+          "group": "2_copy"
+        },
+        {
+          "command": "clipster.copyFileContentWithHeader",
+          "group": "2_copy"
+        },
+        {
+          "command": "clipster.copyRootFolderPath",
+          "group": "3_copyRoot"
+        },
+        {
+          "command": "clipster.copyRootFolderStructure",
+          "group": "3_copyRoot"
+        },
+        {
+          "command": "clipster.copyRootFolderStructureAndContent",
+          "group": "3_copyRoot"
+        },
+        {
+          "command": "clipster.showHelp",
+          "group": "4_help"
+        }
+      ]
+    }
+  }
 }
