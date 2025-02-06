@@ -1,7 +1,7 @@
 {
   "name": "clipster",
   "displayName": "Clipster",
-  "version": "1.2.15",
+  "version": "1.2.16",
   "description": "A VS Code extension to copy paths, folder structures, and contents with customization.",
   "icon": "resources/icon.png",
   "activationEvents": [
@@ -101,33 +101,10 @@
           "type": "array",
           "default": [],
           "description": "Additional file patterns to ignore when copying folder structures."
-        },
-        "clipster.showCopyFileContents": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable Copy File Contents (without path)."
-        },
-        "clipster.maxRootFiles": {
-          "type": "integer",
-          "default": 10,
-          "description": "Max number of files when copying root folder structure & content."
-        },
-        "clipster.maxRootSizeKB": {
-          "type": "integer",
-          "default": 500,
-          "description": "Max total file size (KB) when copying root folder structure & content."
         }
       }
     },
     "commands": [
-      {
-        "command": "clipster.copyFileContents",
-        "group": "2_copy"
-      },
-      {
-        "command": "clipster.copyFileContents",
-        "title": "📄 Copy File Contents"
-      },
       {
         "command": "clipster.createFileFromClipboard",
         "title": "📋 Create File or Folder from Clipboard"
@@ -155,6 +132,14 @@
       {
         "command": "clipster.copyRootFolderStructureAndContent",
         "title": "📝 Copy Root Folder Structure and Content"
+      },
+      {
+        "command": "clipster.copyFile",
+        "title": "📄 Copy File"
+      },
+      {
+        "command": "clipster.pasteFile",
+        "title": "📥 Paste File"
       }
     ],
     "submenus": [
