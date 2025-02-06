@@ -1,7 +1,7 @@
 {
   "name": "clipster",
   "displayName": "Clipster",
-  "version": "1.2.13",
+  "version": "1.2.14",
   "description": "A VS Code extension to copy paths, folder structures, and contents with customization.",
   "icon": "resources/icon.png",
   "activationEvents": [
@@ -62,16 +62,6 @@
           "default": true,
           "description": "Enable Create File or Folder from Clipboard Content."
         },
-        "clipster.showCreateFileWithContent": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable Create File with Path from First Row and File Content."
-        },
-        "clipster.showCopyFilesContentWithPaths": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable Copy Content of Multiple Files with Paths from Clipboard."
-        },
         "clipster.showCopyFolderStructure": {
           "type": "boolean",
           "default": true,
@@ -102,11 +92,6 @@
           "default": true,
           "description": "Enable Copy Root Folder Structure and Content."
         },
-        "clipster.showHelpOption": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable Clipster Help Summary Option."
-        },
         "clipster.showInClipsterSubmenu": {
           "type": "boolean",
           "default": true,
@@ -122,15 +107,7 @@
     "commands": [
       {
         "command": "clipster.createFileFromClipboard",
-        "title": "📋 Create File(s) or Folder(s) from Clipboard"
-      },
-      {
-        "command": "clipster.createFileWithContent",
-        "title": "📝 Create File with Content from Clipboard"
-      },
-      {
-        "command": "clipster.copyFilesContentWithPaths",
-        "title": "📄 Copy File(s) Content with Path(s)"
+        "title": "📋 Create File or Folder from Clipboard"
       },
       {
         "command": "clipster.copyFolderStructure",
@@ -155,10 +132,6 @@
       {
         "command": "clipster.copyRootFolderStructureAndContent",
         "title": "📝 Copy Root Folder Structure and Content"
-      },
-      {
-        "command": "clipster.showHelp",
-        "title": "ℹ️ Clipster Help Summary"
       }
     ],
     "submenus": [
@@ -177,14 +150,6 @@
       "clipsterMenu": [
         {
           "command": "clipster.createFileFromClipboard",
-          "group": "1_create"
-        },
-        {
-          "command": "clipster.createFileWithContent",
-          "group": "1_create"
-        },
-        {
-          "command": "clipster.copyFilesContentWithPaths",
           "group": "1_create"
         },
         {
@@ -210,10 +175,6 @@
         {
           "command": "clipster.copyRootFolderStructureAndContent",
           "group": "3_copyRoot"
-        },
-        {
-          "command": "clipster.showHelp",
-          "group": "4_help"
         }
       ]
     }
