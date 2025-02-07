@@ -1,7 +1,7 @@
 {
   "name": "clipster",
   "displayName": "Clipster",
-  "version": "1.2.17",
+  "version": "1.2.18",
   "description": "A VS Code extension to copy paths, folder structures, and contents with customization.",
   "icon": "resources/icon.png",
   "activationEvents": [
@@ -95,12 +95,17 @@
         "clipster.showCopyFile": {
           "type": "boolean",
           "default": true,
-          "description": "Enable Copy File."
+          "description": "Enable copying individual files."
         },
         "clipster.showPasteFile": {
           "type": "boolean",
           "default": true,
-          "description": "Enable Paste File."
+          "description": "Enable pasting copied files into directories."
+        },
+        "clipster.showCopyFileContents": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable copying file contents only."
         },
         "clipster.showInClipsterSubmenu": {
           "type": "boolean",
@@ -111,6 +116,16 @@
           "type": "array",
           "default": [],
           "description": "Additional file patterns to ignore when copying folder structures."
+        },
+        "clipster.maxRootFiles": {
+          "type": "integer",
+          "default": 10,
+          "description": "Maximum number of files to copy from the root folder."
+        },
+        "clipster.maxRootSizeKB": {
+          "type": "integer",
+          "default": 500,
+          "description": "Maximum size (in KB) of files to copy from the root folder."
         }
       }
     },
@@ -150,6 +165,10 @@
       {
         "command": "clipster.pasteFile",
         "title": "📄 Paste File"
+      },
+      {
+        "command": "clipster.copyFileContents",
+        "title": "📝 Copy File Contents"
       }
     ],
     "submenus": [
@@ -200,6 +219,10 @@
         },
         {
           "command": "clipster.pasteFile",
+          "group": "4_file"
+        },
+        {
+          "command": "clipster.copyFileContents",
           "group": "4_file"
         }
       ]
