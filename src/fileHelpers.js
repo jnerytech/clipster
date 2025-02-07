@@ -1,10 +1,10 @@
 // File: src/fileHelpers.js
-// Version: 2.11.0
+// Version: 2.14.0
 
-import * as vscode from "vscode";
+import fs from "fs";
 import path from "path";
 import os from "os";
-import fs from "fs";
+import * as vscode from "vscode";
 import {
   normalizeClipboardContent,
   getBaseDirectory,
@@ -17,9 +17,18 @@ import {
 import { formatRootFolder } from "./structureFormatter.js";
 import { filterIgnoredFiles } from "./ignoreHelper.js";
 import { openFileInEditor, readFileContent } from "./fileUtils.js";
-import { showErrorMessage, showInformationMessage } from "./messageUtils.js";
+import {
+  showErrorMessage,
+  showInformationMessage,
+  showWarningMessage,
+} from "./messageUtils.js";
 
-// Function to get the folder structure
+/**
+ * Retrieves the folder structure (without file contents).
+ * @param {string} dir - The directory to process.
+ * @param {Array<string>} additionalIgnores - Extra patterns to ignore.
+ * @returns {string} The formatted folder structure.
+ */
 export const getFolderStructure = (dir, additionalIgnores = []) => {
   const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri?.fsPath;
   const absolutePath = path.resolve(dir);
@@ -32,52 +41,11 @@ export const getFolderStructure = (dir, additionalIgnores = []) => {
   return structure;
 };
 
-// Function to get folder structure and content
-export const getFolderStructureAndContent = (dir, additionalIgnores = []) => {
-  const folderStructure = getFolderStructure(dir, additionalIgnores);
-  let content = folderStructure;
-
-  // Append file contents below the folder structure
-  const appendFileContents = (currentDir) => {
-    let entries = fs.readdirSync(currentDir, { withFileTypes: true });
-    entries = filterIgnoredFiles(
-      currentDir,
-      entries.map((e) => e.name),
-      dir,
-      additionalIgnores
-    );
-
-    entries.forEach((entry) => {
-      const entryPath = path.join(currentDir, entry);
-      if (fs.statSync(entryPath).isFile()) {
-        const fileContent = readFileContent(entryPath);
-        content += `${os.EOL}${os.EOL}📄 ${entryPath}${os.EOL}${fileContent}`;
-      } else if (fs.statSync(entryPath).isDirectory()) {
-        appendFileContents(entryPath);
-      }
-    });
-  };
-
-  appendFileContents(dir);
-  return content;
-};
-
-// Function to copy file content with path
-export const copyFileContentWithPath = (uri) => {
-  const filePath = uri.fsPath;
-  const fileContent = readFileContent(filePath);
-  return `${filePath}${os.EOL}${fileContent}`;
-};
-
-// Function to copy root folder path
-export const copyRootFolderPath = () => {
-  const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri?.fsPath;
-  return workspaceRoot
-    ? `📁 Root Path: ${workspaceRoot}`
-    : "No workspace root found.";
-};
-
-// Function to copy root folder structure
+/**
+ * Copies the structure of the root folder without file contents.
+ * @param {Array<string>} additionalIgnores - Extra patterns to ignore.
+ * @returns {string} The formatted root folder structure.
+ */
 export const copyRootFolderStructure = (additionalIgnores = []) => {
   const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri?.fsPath;
   return workspaceRoot
@@ -85,7 +53,84 @@ export const copyRootFolderStructure = (additionalIgnores = []) => {
     : "No workspace root found.";
 };
 
-// Function to create files or folders from clipboard content
+/**
+ * Gets the root folder structure and content but limits the number of files
+ * and total size to prevent excessive memory usage.
+ */
+export const copyRootFolderStructureAndContent = (additionalIgnores = []) => {
+  const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri?.fsPath;
+  if (!workspaceRoot) {
+    return "No workspace root found.";
+  }
+
+  const config = vscode.workspace.getConfiguration("clipster");
+  const maxFiles = config.get("clipster.maxRootFiles", 10); // Default: 10 files
+  const maxSizeKB = config.get("clipster.maxRootSizeKB", 500); // Default: 500KB
+  let totalSize = 0;
+  let fileCount = 0;
+  let content = getFolderStructure(workspaceRoot, additionalIgnores);
+
+  const appendFileContents = (currentDir) => {
+    if (fileCount >= maxFiles || totalSize >= maxSizeKB * 1024) {
+      return; // Stop if limits are reached
+    }
+
+    let entries = fs.readdirSync(currentDir, { withFileTypes: true });
+    entries = filterIgnoredFiles(
+      currentDir,
+      entries.map((e) => e.name),
+      workspaceRoot,
+      additionalIgnores
+    );
+
+    for (const entry of entries) {
+      const entryPath = path.join(currentDir, entry.name);
+      if (fs.statSync(entryPath).isFile()) {
+        const fileSize = fs.statSync(entryPath).size;
+
+        if (totalSize + fileSize > maxSizeKB * 1024 || fileCount >= maxFiles) {
+          vscode.window.showWarningMessage(
+            `⚠️ Reached max limit: ${fileCount} files or ${maxSizeKB}KB`
+          );
+          break;
+        }
+
+        const fileContent = readFileContent(entryPath);
+        content += `${os.EOL}${os.EOL}📄 ${entryPath}${os.EOL}${fileContent}`;
+
+        totalSize += fileSize;
+        fileCount++;
+      } else if (fs.statSync(entryPath).isDirectory()) {
+        appendFileContents(entryPath);
+      }
+
+      if (fileCount >= maxFiles || totalSize >= maxSizeKB * 1024) {
+        break;
+      }
+    }
+  };
+
+  appendFileContents(workspaceRoot);
+  return content;
+};
+
+/**
+ * Validates a file or folder path to ensure it doesn't contain invalid characters.
+ * @param {string} filePath - The path to validate.
+ * @returns {boolean} True if valid, false otherwise.
+ */
+const isValidPath = (filePath) => {
+  const baseName = path.basename(filePath);
+  const invalidChars =
+    process.platform === "win32" ? /[<>:"/\\|?*\x00-\x1F]/g : /[\/\x00]/g;
+  return !invalidChars.test(baseName);
+};
+
+/**
+ * Creates files or folders based on clipboard content.
+ * @param {string} clipboardContent - Content from the clipboard (paths of files or folders).
+ * @param {Object} uri - The URI of the folder where the items should be created.
+ */
 export const createFileOrFolderFromClipboard = async (
   clipboardContent,
   uri
@@ -104,7 +149,8 @@ export const createFileOrFolderFromClipboard = async (
   // Determine the base directory where the user right-clicked
   const baseDir = getBaseDirectory(uri);
   if (!baseDir) {
-    return; // Error message is handled inside getBaseDirectory
+    showErrorMessage("Unable to determine the base directory.");
+    return;
   }
 
   let filesCreated = 0;
@@ -128,15 +174,15 @@ export const createFileOrFolderFromClipboard = async (
     // Determine the target path
     const targetPath = resolveTargetPath(clipboardLine, baseDir);
     if (!targetPath) {
+      showErrorMessage(`Unable to resolve path: '${clipboardLine}'`);
       errorsOccurred++;
-      continue; // Error message is handled inside resolveTargetPath
+      continue;
     }
 
     // Check if the target path exists
     if (fs.existsSync(targetPath)) {
       const stat = fs.statSync(targetPath);
       if (stat.isFile()) {
-        // Open the file
         await openFileInEditor(targetPath);
         showInformationMessage(
           `📄 File '${targetPath}' already exists and was opened.`
@@ -149,8 +195,11 @@ export const createFileOrFolderFromClipboard = async (
 
     // Create directories recursively
     if (!createDirectoriesRecursively(path.dirname(targetPath))) {
+      showErrorMessage(
+        `Failed to create directory: '${path.dirname(targetPath)}'`
+      );
       errorsOccurred++;
-      continue; // Error message is handled inside createDirectoriesRecursively
+      continue;
     }
 
     // Determine if it's a file or folder
@@ -188,33 +237,76 @@ export const createFileOrFolderFromClipboard = async (
   showInformationMessage(summaryMessage);
 };
 
-// Helper function to validate path for invalid characters
-const isValidPath = (filePath) => {
-  const baseName = path.basename(filePath);
-  const invalidChars =
-    process.platform === "win32" ? /[<>:"/\\|?*\x00-\x1F]/g : /[\/\x00]/g;
-  return !invalidChars.test(baseName);
+// Function to copy file content **with** path
+export const copyFileContentWithPath = async (uris) => {
+  if (!Array.isArray(uris)) uris = [uris]; // Ensure it's always an array
+
+  let copiedContent = uris
+    .map((uri) => {
+      const filePath = uri.fsPath;
+      const fileContent = readFileContent(filePath);
+      return `📄 ${filePath}${os.EOL}${fileContent}`;
+    })
+    .join(`${os.EOL}${os.EOL}`); // Separate files for clarity
+
+  try {
+    await vscode.env.clipboard.writeText(copiedContent);
+    vscode.window.showInformationMessage(
+      `📝 ${uris.length} file(s) copied successfully with paths!`
+    );
+  } catch (error) {
+    vscode.window.showErrorMessage(`Failed to copy files: ${error.message}`);
+  }
 };
 
-// Public helper functions
+/**
+ * Reads and copies the file content only (without the path).
+ */
+export const copyFileContents = async (uri) => {
+  try {
+    if (!uri || !uri.fsPath) {
+      vscode.window.showErrorMessage("No file selected.");
+      return;
+    }
 
-// Function to check if clipboard content represents a folder
-export const isFolder = (clipboardContent) => {
-  const lastSegment = clipboardContent.split(/[\\\/]/).pop();
-  return !path.extname(lastSegment) && !lastSegment.startsWith(".");
+    const fileContent = readFileContent(uri.fsPath);
+    await vscode.env.clipboard.writeText(fileContent);
+    vscode.window.showInformationMessage("📄 File contents copied!");
+  } catch (error) {
+    vscode.window.showErrorMessage("Failed to copy file contents.");
+  }
 };
 
-// Function to check if a path is a file
-export const isFile = (filePath) => {
-  return fs.existsSync(filePath) && fs.statSync(filePath).isFile();
-};
+/**
+ * Retrieves the folder structure and contents (unlimited).
+ * @param {string} dir - The directory to process.
+ * @param {Array<string>} additionalIgnores - Extra patterns to ignore.
+ * @returns {string} Folder structure and file contents.
+ */
+export const getFolderStructureAndContent = (dir, additionalIgnores = []) => {
+  const folderStructure = getFolderStructure(dir, additionalIgnores);
+  let content = folderStructure;
 
-// Function to check if a given path is an absolute path
-export const isFullPath = (clipboardContent) => {
-  return path.isAbsolute(clipboardContent);
-};
+  const appendFileContents = (currentDir) => {
+    let entries = fs.readdirSync(currentDir, { withFileTypes: true });
+    entries = filterIgnoredFiles(
+      currentDir,
+      entries.map((e) => e.name),
+      dir,
+      additionalIgnores
+    );
 
-// Function to check if a given path is a relative path
-export const isRelativePath = (clipboardContent) => {
-  return !path.isAbsolute(clipboardContent);
+    entries.forEach((entry) => {
+      const entryPath = path.join(currentDir, entry.name);
+      if (fs.statSync(entryPath).isFile()) {
+        const fileContent = readFileContent(entryPath);
+        content += `${os.EOL}${os.EOL}📄 ${entryPath}${os.EOL}${fileContent}`;
+      } else if (fs.statSync(entryPath).isDirectory()) {
+        appendFileContents(entryPath);
+      }
+    });
+  };
+
+  appendFileContents(dir);
+  return content;
 };

@@ -38,6 +38,21 @@
         "default": true,
         "description": "Enable Copy Root Folder Structure and Content."
       },
+      "clipster.showCopyFile": {
+        "type": "boolean",
+        "default": true,
+        "description": "Enable copying individual files."
+      },
+      "clipster.showPasteFile": {
+        "type": "boolean",
+        "default": true,
+        "description": "Enable pasting copied files into directories."
+      },
+      "clipster.showCopyFileContents": {
+        "type": "boolean",
+        "default": true,
+        "description": "Enable copying file contents only."
+      },
       "clipster.showInClipsterSubmenu": {
         "type": "boolean",
         "default": true,
@@ -47,6 +62,16 @@
         "type": "array",
         "default": [],
         "description": "Additional file patterns to ignore when copying folder structures."
+      },
+      "clipster.maxRootFiles": {
+        "type": "integer",
+        "default": 10,
+        "description": "Maximum number of files to copy from the root folder."
+      },
+      "clipster.maxRootSizeKB": {
+        "type": "integer",
+        "default": 500,
+        "description": "Maximum size (in KB) of files to copy from the root folder."
       }
     }
   },
@@ -73,11 +98,23 @@
     },
     {
       "command": "clipster.copyFileContentWithHeader",
-      "title": "📝 Copy File Content with Path"
+      "title": "📝 Copy File(s) Content with Path"
     },
     {
       "command": "clipster.copyRootFolderStructureAndContent",
       "title": "📝 Copy Root Folder Structure and Content"
+    },
+    {
+      "command": "clipster.copyFile",
+      "title": "📄 Copy File"
+    },
+    {
+      "command": "clipster.pasteFile",
+      "title": "📄 Paste File"
+    },
+    {
+      "command": "clipster.copyFileContents",
+      "title": "📝 Copy File Contents"
     }
   ],
   "submenus": [
@@ -121,6 +158,15 @@
       {
         "command": "clipster.copyRootFolderStructureAndContent",
         "group": "3_copyRoot"
+      },
+
+      {
+        "command": "clipster.pasteFile",
+        "group": "4_file"
+      },
+      {
+        "command": "clipster.copyFileContents",
+        "group": "4_file"
       }
     ]
   }

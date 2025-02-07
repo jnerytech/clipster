@@ -1,0 +1,33 @@
+{
+  "themes": {
+    "default": {
+      "icons": {
+        "folder": "📂",
+        "file": "📄",
+        "box": "📦",
+        "computer": "🖥️"
+      },
+      "treeSymbols": {
+        "branch": "┣",
+        "vertical": "┃",
+        "last": "┗",
+        "space": "  "
+      }
+    },
+    "alternative": {
+      "icons": {
+        "folder": "📁",
+        "file": "📃",
+        "box": "📦",
+        "computer": "💻"
+      },
+      "treeSymbols": {
+        "branch": "├",
+        "vertical": "│",
+        "last": "└",
+        "space": "  "
+      }
+    }
+  },
+  "currentTheme": "default"
+}

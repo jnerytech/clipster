@@ -1,203 +1,198 @@
 // File: src/extension.js
-// Version: 2.11.0
+// Version: 2.11.1
 
 const vscode = require("vscode");
+const logger = require("./logger.js");
 const {
   getFolderStructure,
   getFolderStructureAndContent,
   copyRootFolderPath,
   copyRootFolderStructure,
+  copyRootFolderStructureAndContent, // ✅ FIXED
   copyFileContentWithPath,
   createFileOrFolderFromClipboard,
 } = require("./fileHelpers.js");
 const { copyToClipboard } = require("./clipboardHelper.js");
+const {
+  copyFileToClipboard,
+  pasteFileFromClipboard,
+} = require("./fileUtils.js");
 
 let disposables = [];
 
+// Helper functions
+const registerConditionalCommand = (commandName, configKey, handler) => {
+  const config = vscode.workspace.getConfiguration("clipster");
+  if (config.get(configKey, true)) {
+    disposables.push(vscode.commands.registerCommand(commandName, handler));
+  }
+};
+
+const withErrorHandling =
+  (handler, errorMessage) =>
+  async (...args) => {
+    try {
+      return await handler(...args);
+    } catch (error) {
+      vscode.window.showErrorMessage(`${errorMessage}: ${error.message}`);
+      logger.error(`${errorMessage}: ${error.message}`);
+    }
+  };
+
+const createCopyHandler =
+  (dataFn, successMessage) =>
+  async (...args) => {
+    const data = await dataFn(...args);
+    await copyToClipboard(data, successMessage);
+  };
+
+const processClipboardContent = async () => {
+  const clipboardContent = await vscode.env.clipboard.readText();
+  return clipboardContent
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+};
+
+const confirmMultiCreate = async (itemCount) => {
+  if (itemCount <= 1) return true;
+
+  const confirmation = await vscode.window.showWarningMessage(
+    `You are about to create ${itemCount} items. Proceed?`,
+    { modal: true },
+    "Yes",
+    "No"
+  );
+  return confirmation === "Yes";
+};
+
+// Command handlers
+const createFileFromClipboardHandler = async (uri) => {
+  const lines = await processClipboardContent();
+  if (!lines.length) throw new Error("Clipboard content is empty");
+  if (!(await confirmMultiCreate(lines.length))) return;
+
+  await createFileOrFolderFromClipboard(lines.join("\n"), uri);
+};
+
 // Register commands function
 const registerCommands = () => {
-  console.log("Registering Clipster commands...");
+  logger.log("🛠 Registering Clipster commands...");
   const config = vscode.workspace.getConfiguration("clipster");
   const additionalIgnores = config.get("additionalIgnores", []);
 
-  // Clear existing disposables (commands)
-  disposables.forEach((disposable) => disposable.dispose());
+  disposables.forEach((d) => d.dispose());
   disposables = [];
 
-  // Register Create File or Folder from Clipboard
-  if (config.get("clipster.showCreateFileFromClipboard", true)) {
-    disposables.push(
-      vscode.commands.registerCommand(
-        "clipster.createFileFromClipboard",
-        async (uri) => {
-          const clipboardContent = await vscode.env.clipboard.readText();
+  // Register System Copy-Paste Commands
+  if (config.get("clipster.showSystemCopyPaste", true)) {
+    registerConditionalCommand(
+      "clipster.copyFile",
+      "clipster.showCopyFile",
+      withErrorHandling(copyFileToClipboard, "Failed to copy file")
+    );
 
-          // Split and process clipboard content
-          const lines = clipboardContent
-            .split(/\r?\n/)
-            .map((line) => line.trim())
-            .filter((line) => line.length > 0);
-
-          if (lines.length === 0) {
-            vscode.window.showErrorMessage(
-              "Clipboard is empty or contains only whitespace."
-            );
-            return;
-          }
-
-          // If multiple lines, ask for confirmation
-          if (lines.length > 1) {
-            const confirmation = await vscode.window.showWarningMessage(
-              `You are about to create ${lines.length} items. Do you want to proceed?`,
-              { modal: true },
-              "Yes",
-              "No"
-            );
-
-            if (confirmation !== "Yes") {
-              vscode.window.showInformationMessage("Operation cancelled.");
-              return;
-            }
-          }
-
-          try {
-            await createFileOrFolderFromClipboard(clipboardContent, uri);
-          } catch (err) {
-            vscode.window.showErrorMessage(`Failed to create: ${err.message}`);
-          }
-        }
-      )
+    registerConditionalCommand(
+      "clipster.pasteFile",
+      "clipster.showPasteFile",
+      withErrorHandling(pasteFileFromClipboard, "Failed to paste file")
     );
   }
 
-  // Register Copy Folder Structure
-  if (config.get("clipster.showCopyFolderStructure", true)) {
-    disposables.push(
-      vscode.commands.registerCommand(
-        "clipster.copyFolderStructure",
-        async (uri) => {
-          const result = await getFolderStructure(
-            uri.fsPath,
-            additionalIgnores
-          );
-          await copyToClipboard(
-            result,
-            "📁 Folder structure copied successfully!"
-          );
-        }
-      )
-    );
-  }
+  // Register Clipboard Create Command
+  registerConditionalCommand(
+    "clipster.createFileFromClipboard",
+    "clipster.showCreateFileFromClipboard",
+    withErrorHandling(
+      createFileFromClipboardHandler,
+      "Failed to create files or folders"
+    )
+  );
 
-  // Register Copy Folder Structure And Content
-  if (config.get("clipster.showCopyFolderStructureAndContent", true)) {
-    disposables.push(
-      vscode.commands.registerCommand(
-        "clipster.copyFolderStructureAndContent",
-        async (uri) => {
-          const result = await getFolderStructureAndContent(
-            uri.fsPath,
-            additionalIgnores
-          );
-          await copyToClipboard(
-            result,
-            "📁 Folder structure and content copied successfully!"
-          );
-        }
+  // Register Copy Commands
+  const registerCopyCommand = (
+    commandName,
+    configKey,
+    handler,
+    successMessage
+  ) => {
+    registerConditionalCommand(
+      commandName,
+      configKey,
+      withErrorHandling(
+        createCopyHandler(handler, successMessage),
+        `Failed to copy ${commandName.split(".").pop()}`
       )
     );
-  }
+  };
 
-  // Register Copy Root Folder Path
-  if (config.get("clipster.showCopyRootFolderPath", true)) {
-    disposables.push(
-      vscode.commands.registerCommand(
-        "clipster.copyRootFolderPath",
-        async () => {
-          try {
-            const result = copyRootFolderPath();
-            console.log("Result from copyRootFolderPath:", result);
-            await copyToClipboard(
-              result,
-              "📁 Root folder path copied successfully!"
-            );
-          } catch (error) {
-            console.error("Error during copyRootFolderPath:", error);
-            vscode.window.showErrorMessage("Failed to copy root folder path.");
-          }
-        }
-      )
-    );
-  }
+  registerCopyCommand(
+    "clipster.copyFolderStructure",
+    "clipster.showCopyFolderStructure",
+    (uri) => getFolderStructure(uri.fsPath, additionalIgnores),
+    "📁 Folder structure copied!"
+  );
 
-  // Register Copy Root Folder Structure
-  if (config.get("clipster.showCopyRootFolderStructure", true)) {
-    disposables.push(
-      vscode.commands.registerCommand(
-        "clipster.copyRootFolderStructure",
-        async () => {
-          const result = copyRootFolderStructure(additionalIgnores);
-          await copyToClipboard(
-            result,
-            "📁 Root folder structure copied successfully!"
-          );
-        }
-      )
-    );
-  }
+  registerCopyCommand(
+    "clipster.copyFolderStructureAndContent",
+    "clipster.showCopyFolderStructureAndContent",
+    (uri) => getFolderStructureAndContent(uri.fsPath, additionalIgnores),
+    "📁 Folder structure and content copied!"
+  );
 
-  // Register Copy File Content With Header
-  if (config.get("clipster.showCopyFileContentWithHeader", true)) {
-    disposables.push(
-      vscode.commands.registerCommand(
-        "clipster.copyFileContentWithHeader",
-        async (uri) => {
-          const result = await copyFileContentWithPath(uri);
-          await copyToClipboard(
-            result,
-            "📝 File content with path copied successfully!"
-          );
-        }
-      )
-    );
-  }
+  registerCopyCommand(
+    "clipster.copyRootFolderPath",
+    "clipster.showCopyRootFolderPath",
+    () => copyRootFolderPath(),
+    "📁 Root folder path copied!"
+  );
+
+  registerCopyCommand(
+    "clipster.copyRootFolderStructure",
+    "clipster.showCopyRootFolderStructure",
+    () => copyRootFolderStructure(additionalIgnores),
+    "📁 Root folder structure copied!"
+  );
+
+  registerCopyCommand(
+    "clipster.copyRootFolderStructureAndContent",
+    "clipster.showCopyRootFolderStructureAndContent",
+    () => copyRootFolderStructureAndContent(additionalIgnores),
+    "📁 Root folder structure and content copied!"
+  );
+
+  registerConditionalCommand(
+    "clipster.copyFileContentWithHeader",
+    "clipster.showCopyFileContentWithHeader",
+    withErrorHandling(
+      async (uri, uris) =>
+        copyFileContentWithPath(Array.isArray(uris) ? uris : [uri]),
+      "Failed to copy file content with header"
+    )
+  );
 };
 
 // Activation function
 function activate(context) {
-  // Register initial commands based on current configuration
+  logger.log("🔥 Clipster is activating...");
+
   registerCommands();
 
-  // Listen for configuration changes and re-register commands accordingly
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((event) => {
-      if (event.affectsConfiguration("clipster")) {
-        registerCommands(); // Re-register commands when configuration changes
-      }
-    })
+      if (event.affectsConfiguration("clipster")) registerCommands();
+    }),
+    new vscode.Disposable(() => disposables.forEach((d) => d.dispose()))
   );
 
-  // Dispose all commands when deactivating
-  context.subscriptions.push(
-    new vscode.Disposable(() => {
-      disposables.forEach((disposable) => disposable.dispose());
-    })
-  );
+  logger.log("✅ Clipster successfully activated!");
 }
 
 // Deactivation function
 function deactivate() {
-  console.log("Deactivating Clipster...");
-
-  // Dispose of all registered commands or event listeners
-  disposables.forEach((disposable) => disposable.dispose());
+  logger.log("🛑 Clipster is deactivating...");
+  disposables.forEach((d) => d.dispose());
   disposables = [];
-
-  // Additional cleanup if needed
 }
 
-// Export the activate and deactivate functions
-module.exports = {
-  activate,
-  deactivate,
-};
+module.exports = { activate, deactivate };
