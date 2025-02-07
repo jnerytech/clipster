@@ -1,7 +1,7 @@
 {
   "name": "clipster",
   "displayName": "Clipster",
-  "version": "1.2.21",
+  "version": "1.2.22",
   "description": "A VS Code extension to copy paths, folder structures, and contents with customization.",
   "icon": "resources/icon.png",
   "activationEvents": [
@@ -212,10 +212,6 @@
         {
           "command": "clipster.copyRootFolderStructureAndContent",
           "group": "3_copyRoot"
-        },
-        {
-          "command": "clipster.copyFile",
-          "group": "4_file"
         },
         {
           "command": "clipster.pasteFile",
