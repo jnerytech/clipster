@@ -1,7 +1,7 @@
 {
   "name": "clipster",
   "displayName": "Clipster",
-  "version": "1.2.16",
+  "version": "1.2.17",
   "description": "A VS Code extension to copy paths, folder structures, and contents with customization.",
   "icon": "resources/icon.png",
   "activationEvents": [
@@ -92,6 +92,16 @@
           "default": true,
           "description": "Enable Copy Root Folder Structure and Content."
         },
+        "clipster.showCopyFile": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Copy File."
+        },
+        "clipster.showPasteFile": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Paste File."
+        },
         "clipster.showInClipsterSubmenu": {
           "type": "boolean",
           "default": true,
@@ -139,7 +149,7 @@
       },
       {
         "command": "clipster.pasteFile",
-        "title": "📥 Paste File"
+        "title": "📄 Paste File"
       }
     ],
     "submenus": [
@@ -183,6 +193,14 @@
         {
           "command": "clipster.copyRootFolderStructureAndContent",
           "group": "3_copyRoot"
+        },
+        {
+          "command": "clipster.copyFile",
+          "group": "4_file"
+        },
+        {
+          "command": "clipster.pasteFile",
+          "group": "4_file"
         }
       ]
     }
