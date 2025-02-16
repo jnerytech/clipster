@@ -1,7 +1,7 @@
 {
   "name": "clipster",
   "displayName": "Clipster",
-  "version": "1.2.29",
+  "version": "1.2.30",
   "description": "A VS Code extension to copy paths, folder structures, and contents with customization.",
   "icon": "resources/icon.png",
   "activationEvents": [
@@ -26,6 +26,7 @@
   "devDependencies": {
     "@babel/core": "^7.25.7",
     "@babel/plugin-transform-modules-commonjs": "^7.25.7",
+    "@babel/plugin-transform-strict-mode": "^7.25.9",
     "@babel/preset-env": "^7.25.7",
     "@babel/preset-react": "^7.25.7",
     "@babel/register": "^7.25.9",
