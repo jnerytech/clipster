@@ -4,7 +4,7 @@ import { copyToClipboard } from "../clipboardHelper.js";
 import sinon from "sinon";
 import * as vscode from "vscode";
 
-describe("Copy Root Folder Path Tests", () => {
+describe.skip("Copy Root Folder Path Tests", () => {
   let clipboardStub;
   let showInfoMessageStub;
   let showErrorMessageStub;

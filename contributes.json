@@ -106,15 +106,11 @@
     },
     {
       "command": "clipster.copyFile",
-      "title": "📄 Copy File"
+      "title": "📄 Copy File(s) and/or Folder(s)"
     },
     {
       "command": "clipster.pasteFile",
-      "title": "📄 Paste File"
-    },
-    {
-      "command": "clipster.copyFileContents",
-      "title": "📝 Copy File Contents"
+      "title": "📄 Paste File(s) and/or Folder(s)"
     }
   ],
   "submenus": [
@@ -159,14 +155,15 @@
         "command": "clipster.copyRootFolderStructureAndContent",
         "group": "3_copyRoot"
       },
-
       {
-        "command": "clipster.pasteFile",
-        "group": "4_file"
+        "command": "clipster.copyFile",
+        "group": "4_file",
+        "when": "explorerResourceIsFolder || explorerResourceIsFile"
       },
       {
-        "command": "clipster.copyFileContents",
-        "group": "4_file"
+        "command": "clipster.pasteFile",
+        "group": "4_file",
+        "when": "explorerResourceIsFolder"
       }
     ]
   }
