@@ -4,30 +4,24 @@ const CopyPlugin = require("copy-webpack-plugin");
 
 module.exports = {
   target: "node",
-  entry: "./src/extension.js", // The entry point for your extension
+  entry: "./src/extension.ts",
   output: {
     path: path.resolve(__dirname, "dist"),
-    filename: "extension.js", // Output the bundled extension
+    filename: "extension.js",
     libraryTarget: "commonjs2",
   },
-  devtool: "source-map",
   externals: {
-    vscode: "commonjs vscode", // Exclude vscode module from bundling
+    vscode: "commonjs vscode",
   },
   resolve: {
-    extensions: [".js", ".json"], // Ensure .js files are resolved
+    extensions: [".ts", ".js", ".json"],
   },
   module: {
     rules: [
       {
-        test: /\.js$/, // Apply the rule to all .js files
+        test: /\.ts$/,
         exclude: /node_modules/,
-        use: {
-          loader: "babel-loader", // Use Babel loader for transpiling
-          options: {
-            presets: ["@babel/preset-env"],
-          },
-        },
+        use: "ts-loader",
       },
     ],
   },
@@ -35,18 +29,11 @@ module.exports = {
     new CopyPlugin({
       patterns: [
         {
-          from: "src/*.js", // Copy all .js files from src to dist
-          to: path.resolve(__dirname, "dist/[name].js"), // Keep the same file names in dist
-        },
-        {
-          from: "resources/**/*", // Copy resources folder (e.g., icon.png)
+          from: "resources/**/*",
           to: path.resolve(__dirname, "dist/[path][name][ext]"),
         },
       ],
     }),
   ],
   mode: process.env.NODE_ENV === "production" ? "production" : "development",
-  optimization: {
-    minimize: true, // Minify the output for production builds
-  },
 };
