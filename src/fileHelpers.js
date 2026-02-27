@@ -24,7 +24,7 @@ export const isFolder = (filePath) => {
     return stat.isDirectory();
   } catch (error) {
     logger.error(
-      `⚠️ Error determining if folder: ${filePath} - ${error.message}`,
+      `Error determining if folder: ${filePath} - ${error.message}`,
       "fileHelpers",
       __filename
     );
@@ -60,7 +60,7 @@ export const getFolderStructure = (dir, additionalIgnores = []) => {
   const absolutePath = path.resolve(dir);
   const folderName = path.basename(dir);
   let structure = formatRootFolder(path.basename(workspaceRoot), absolutePath);
-  structure += `📂 ${folderName}${os.EOL}`; // Include the folder name
+  structure += `${folderName}/${os.EOL}`; // Include the folder name
   structure += traverseDirectory(dir, workspaceRoot, additionalIgnores);
   return structure;
 };
@@ -129,12 +129,12 @@ export const copyRootFolderStructureAndContent = (additionalIgnores = []) => {
         const fileSize = stats.size;
         if (totalSize + fileSize > maxSizeKB * 1024 || fileCount >= maxFiles) {
           vscode.window.showWarningMessage(
-            `⚠️ Reached max limit: ${fileCount} files or ${maxSizeKB}KB total`
+            `Reached limit: ${fileCount} files or ${maxSizeKB}KB total`
           );
           break;
         }
         const fileContent = readFileContent(entryPath);
-        content += `${os.EOL}${os.EOL}📄 ${entryPath}${os.EOL}${fileContent}`;
+        content += `${os.EOL}${os.EOL}File: ${entryPath}${os.EOL}${fileContent}`;
 
         totalSize += fileSize;
         fileCount++;
@@ -174,7 +174,7 @@ export const createFileOrFolderFromClipboard = async (
   uri
 ) => {
   logger.log(
-    `📋 Processing clipboard content: ${clipboardContent}`,
+    `Processing clipboard content: ${clipboardContent}`,
     "createFileOrFolderFromClipboard",
     __filename
   );
@@ -187,7 +187,7 @@ export const createFileOrFolderFromClipboard = async (
   if (!lines.length) {
     showErrorMessage("Clipboard is empty or contains only whitespace.");
     logger.error(
-      "❌ Clipboard is empty or contains only whitespace.",
+      "Clipboard is empty or contains only whitespace.",
       "createFileOrFolderFromClipboard",
       __filename
     );
@@ -198,7 +198,7 @@ export const createFileOrFolderFromClipboard = async (
   if (!baseDir) {
     showErrorMessage("Unable to determine the base directory.");
     logger.error(
-      "❌ Unable to determine the base directory.",
+      "Unable to determine the base directory.",
       "createFileOrFolderFromClipboard",
       __filename
     );
@@ -213,7 +213,7 @@ export const createFileOrFolderFromClipboard = async (
     if (!isValidPath(line)) {
       showErrorMessage(`Invalid path: '${line}'`);
       logger.error(
-        `❌ Invalid path detected: ${line}`,
+        `Invalid path: ${line}`,
         "createFileOrFolderFromClipboard",
         __filename
       );
@@ -231,7 +231,7 @@ export const createFileOrFolderFromClipboard = async (
         fs.mkdirSync(targetPath, { recursive: true });
         foldersCreated++;
         logger.log(
-          `📂 Created folder: ${targetPath}`,
+          `Created folder: ${targetPath}`,
           "createFileOrFolderFromClipboard",
           __filename
         );
@@ -244,7 +244,7 @@ export const createFileOrFolderFromClipboard = async (
         fs.writeFileSync(targetPath, "");
         filesCreated++;
         logger.log(
-          `📄 Created file: ${targetPath}`,
+          `Created file: ${targetPath}`,
           "createFileOrFolderFromClipboard",
           __filename
         );
@@ -252,7 +252,7 @@ export const createFileOrFolderFromClipboard = async (
     } catch (error) {
       showErrorMessage(`Failed to create: ${line} - ${error.message}`);
       logger.error(
-        `❌ Error creating path: ${targetPath} - ${error.message}`,
+        `Error creating path: ${targetPath} - ${error.message}`,
         "createFileOrFolderFromClipboard",
         __filename
       );
@@ -260,9 +260,9 @@ export const createFileOrFolderFromClipboard = async (
     }
   }
 
-  let summaryMessage = `✨ Created ${filesCreated} file(s) and ${foldersCreated} folder(s).`;
+  let summaryMessage = `Created ${filesCreated} file(s) and ${foldersCreated} folder(s).`;
   if (errorsOccurred > 0) {
-    summaryMessage += ` ❌ ${errorsOccurred} item(s) could not be created due to errors.`;
+    summaryMessage += ` ${errorsOccurred} item(s) could not be created due to errors.`;
   }
   showInformationMessage(summaryMessage);
   logger.log(summaryMessage, "createFileOrFolderFromClipboard", __filename);
@@ -280,19 +280,19 @@ export const copyFileContentWithPath = async (uris) => {
     .map((uri) => {
       const filePath = uri.fsPath;
       const fileContent = readFileContent(filePath);
-      return `📄 ${filePath}${os.EOL}${fileContent}`;
+      return `File: ${filePath}${os.EOL}${fileContent}`;
     })
     .join(`${os.EOL}${os.EOL}`);
 
   try {
     await vscode.env.clipboard.writeText(copiedContent);
     vscode.window.showInformationMessage(
-      `📝 ${uris.length} file(s) copied successfully with paths!`
+      `${uris.length} file(s) copied with paths.`
     );
   } catch (error) {
     vscode.window.showErrorMessage(`Failed to copy files: ${error.message}`);
     logger.error(
-      `❌ Failed to copy files: ${error.message}`,
+      `Failed to copy files: ${error.message}`,
       "fileHelpers",
       __filename
     );
@@ -311,11 +311,11 @@ export const copyFileContents = async (uri) => {
     }
     const fileContent = readFileContent(uri.fsPath);
     await vscode.env.clipboard.writeText(fileContent);
-    vscode.window.showInformationMessage("📄 File contents copied!");
+    vscode.window.showInformationMessage("File contents copied.");
   } catch (error) {
     vscode.window.showErrorMessage("Failed to copy file contents.");
     logger.error(
-      `❌ Failed to copy file contents: ${error.message}`,
+      `Failed to copy file contents: ${error.message}`,
       "fileHelpers",
       __filename
     );
@@ -336,7 +336,7 @@ export const getFolderStructureAndContent = (
 ) => {
   if (!dir || typeof dir !== "string") {
     logger.error(
-      `❌ Invalid directory path received: ${JSON.stringify(dir)}`,
+      `Invalid directory path received: ${JSON.stringify(dir)}`,
       "getFolderStructureAndContent",
       __filename
     );
@@ -344,19 +344,19 @@ export const getFolderStructureAndContent = (
   }
 
   logger.log(
-    `🔍 Scanning folder for content: ${dir}`,
+    `Scanning folder: ${dir}`,
     "getFolderStructureAndContent",
     __filename
   );
 
-  let structure = `📦 ${path.basename(dir)}\n`;
+  let structure = `${path.basename(dir)}\n`;
   let entries;
 
   try {
     entries = fs.readdirSync(dir, { withFileTypes: true });
   } catch (error) {
     logger.error(
-      `❌ Unable to read directory: ${dir} - ${error.message}`,
+      `Unable to read directory: ${dir} - ${error.message}`,
       "getFolderStructureAndContent",
       __filename
     );
@@ -373,7 +373,7 @@ export const getFolderStructureAndContent = (
   for (const entry of entries) {
     if (typeof entry !== "string") {
       logger.error(
-        `⚠️ Unexpected non-string entry: ${JSON.stringify(entry)}`,
+        `Unexpected entry type: ${JSON.stringify(entry)}`,
         "getFolderStructureAndContent",
         __filename
       );
@@ -382,7 +382,7 @@ export const getFolderStructureAndContent = (
 
     const entryPath = path.join(dir, entry);
     logger.log(
-      `📄 Processing: ${entryPath}`,
+      `Processing: ${entryPath}`,
       "getFolderStructureAndContent",
       __filename
     );
@@ -391,7 +391,7 @@ export const getFolderStructureAndContent = (
       stats = fs.statSync(entryPath);
     } catch (err) {
       logger.error(
-        `⚠️ Failed to stat: ${entryPath} - ${err.message}`,
+        `Failed to stat: ${entryPath} - ${err.message}`,
         "getFolderStructureAndContent",
         __filename
       );
@@ -407,10 +407,10 @@ export const getFolderStructureAndContent = (
     } else {
       try {
         const content = fs.readFileSync(entryPath, "utf8");
-        structure += `${indent}📄 ${entry}\nContent:\n${content}\n\n`;
+        structure += `${indent}${entry}\nContent:\n${content}\n\n`;
       } catch (err) {
         logger.error(
-          `⚠️ Failed to read file: ${entryPath} - ${err.message}`,
+          `Failed to read file: ${entryPath} - ${err.message}`,
           "getFolderStructureAndContent",
           __filename
         );

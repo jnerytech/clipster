@@ -20,14 +20,14 @@ export const openFileInEditor = async (filePath) => {
     const document = await vscode.workspace.openTextDocument(filePath);
     await vscode.window.showTextDocument(document);
     logger.log(
-      `📄 Opened file in editor: ${filePath}`,
+      `Opened file in editor: ${filePath}`,
       "fileUtils",
       __filename
     );
   } catch (err) {
     showErrorMessage(`Failed to open file: ${err.message}`);
     logger.error(
-      `❌ Failed to open file: ${filePath} - ${err.message}`,
+      `Failed to open file: ${filePath} - ${err.message}`,
       "fileUtils",
       __filename
     );
@@ -44,7 +44,7 @@ export const isFile = (filePath) => {
     return fs.existsSync(filePath) && fs.statSync(filePath).isFile();
   } catch (error) {
     logger.error(
-      `❌ Error checking if path is file: ${filePath} - ${error.message}`,
+      `Error checking path: ${filePath} - ${error.message}`,
       "fileUtils",
       __filename
     );
@@ -65,7 +65,7 @@ export const getSourceDirectory = (uri) => {
   if (!selectedPath) {
     showErrorMessage("No valid path provided.");
     logger.error(
-      "❌ No valid path provided to determine source directory.",
+      "No valid path provided to determine source directory.",
       "fileUtils",
       __filename
     );
@@ -75,7 +75,7 @@ export const getSourceDirectory = (uri) => {
   if (isFile(selectedPath)) {
     const parentDir = path.dirname(selectedPath);
     logger.log(
-      `📂 Using parent directory of selected file: ${parentDir}`,
+      `Using parent directory: ${parentDir}`,
       "fileUtils",
       __filename
     );
@@ -83,7 +83,7 @@ export const getSourceDirectory = (uri) => {
   }
 
   logger.log(
-    `📂 Using selected folder: ${selectedPath}`,
+    `Using selected folder: ${selectedPath}`,
     "fileUtils",
     __filename
   );
@@ -98,16 +98,16 @@ export const copyFileToClipboard = async (uri) => {
   try {
     const filePath = uri.fsPath;
     await vscode.env.clipboard.writeText(filePath);
-    showInformationMessage(`📄 File copied: ${path.basename(filePath)}`);
+    showInformationMessage(`File copied: ${path.basename(filePath)}`);
     logger.log(
-      `📄 File copied to clipboard: ${filePath}`,
+      `File copied to clipboard: ${filePath}`,
       "fileUtils",
       __filename
     );
   } catch (error) {
     showErrorMessage(`Failed to copy file: ${error.message}`);
     logger.error(
-      `❌ Failed to copy file: ${error.message}`,
+      `Failed to copy file: ${error.message}`,
       "fileUtils",
       __filename
     );
@@ -125,7 +125,7 @@ export const pasteFileFromClipboard = async (targetUri) => {
     if (!fs.existsSync(clipboardContent)) {
       showErrorMessage("Clipboard does not contain a valid file path.");
       logger.error(
-        "❌ Clipboard does not contain a valid file path.",
+        "Clipboard does not contain a valid file path.",
         "fileUtils",
         __filename
       );
@@ -140,7 +140,7 @@ export const pasteFileFromClipboard = async (targetUri) => {
     if (fs.existsSync(targetPath)) {
       showWarningMessage(`File already exists: ${path.basename(targetPath)}`);
       logger.warn(
-        `⚠️ File already exists: ${targetPath}`,
+        `File already exists: ${targetPath}`,
         "fileUtils",
         __filename
       );
@@ -148,12 +148,12 @@ export const pasteFileFromClipboard = async (targetUri) => {
     }
 
     fs.copyFileSync(clipboardContent, targetPath);
-    showInformationMessage(`📄 File pasted: ${path.basename(targetPath)}`);
-    logger.log(`📄 File pasted to: ${targetPath}`, "fileUtils", __filename);
+    showInformationMessage(`File pasted: ${path.basename(targetPath)}`);
+    logger.log(`File pasted to: ${targetPath}`, "fileUtils", __filename);
   } catch (error) {
     showErrorMessage(`Failed to paste file: ${error.message}`);
     logger.error(
-      `❌ Failed to paste file: ${error.message}`,
+      `Failed to paste file: ${error.message}`,
       "fileUtils",
       __filename
     );
@@ -168,18 +168,18 @@ export const pasteFileFromClipboard = async (targetUri) => {
 export const readFileContent = (filePath) => {
   try {
     if (!fs.existsSync(filePath)) {
-      showErrorMessage(`⚠️ File not found: ${filePath}`);
-      logger.warn(`⚠️ File not found: ${filePath}`, "fileUtils", __filename);
+      showErrorMessage(`File not found: ${filePath}`);
+      logger.warn(`File not found: ${filePath}`, "fileUtils", __filename);
       return "";
     }
 
     const content = fs.readFileSync(filePath, "utf-8");
-    logger.log(`📄 Read file content: ${filePath}`, "fileUtils", __filename);
+    logger.log(`Read file content: ${filePath}`, "fileUtils", __filename);
     return content;
   } catch (err) {
-    showErrorMessage(`❌ Failed to read file: ${err.message}`);
+    showErrorMessage(`Failed to read file: ${err.message}`);
     logger.error(
-      `❌ Failed to read file: ${filePath} - ${err.message}`,
+      `Failed to read file: ${filePath} - ${err.message}`,
       "fileUtils",
       __filename
     );

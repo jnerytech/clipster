@@ -30,21 +30,21 @@ describe("Logger Module", () => {
 
   test("logs messages with default module name", () => {
     logger.log("Test message");
-    expect(consoleLogSpy).toHaveBeenCalledWith("✅ [General] Test message");
+    expect(consoleLogSpy).toHaveBeenCalledWith("[INFO] [General] Test message");
   });
 
   test("logs messages with a specific module name", () => {
     logger.log("Test message", "TestModule");
-    expect(consoleLogSpy).toHaveBeenCalledWith("✅ [TestModule] Test message");
+    expect(consoleLogSpy).toHaveBeenCalledWith("[INFO] [TestModule] Test message");
   });
 
   test("logs error messages with default module name", () => {
     logger.error("Test error");
-    expect(consoleErrorSpy).toHaveBeenCalledWith("❌ [General] Test error");
+    expect(consoleErrorSpy).toHaveBeenCalledWith("[ERROR] [General] Test error");
   });
 
   test("logs error messages with a specific module name", () => {
     logger.error("Test error", "ErrorModule");
-    expect(consoleErrorSpy).toHaveBeenCalledWith("❌ [ErrorModule] Test error");
+    expect(consoleErrorSpy).toHaveBeenCalledWith("[ERROR] [ErrorModule] Test error");
   });
 });

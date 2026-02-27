@@ -21,7 +21,7 @@
 //       getFolderStructure("/mocked/workspace/project")
 //     );
 //     const expected = systemLineEnding(
-//       `📦 workspace\n🖥️ D:\\mocked\\workspace\\project\n\n📂 project\n┗ 📄 file.txt\n`
+//       `workspace\nPath: D:\\mocked\\workspace\\project\n\nproject/\n┗ file.txt\n`
 //     );
 //     assert.equal(result, expected);
 //   });

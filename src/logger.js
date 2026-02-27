@@ -34,7 +34,7 @@ const logger = {
     const formattedPath = filePath
       ? ` [File: ${getRelativeFilePath(filePath)}]`
       : "";
-    const formattedMessage = `✅ [${moduleName}] ${message}${formattedPath}`;
+    const formattedMessage = `[INFO] [${moduleName}] ${message}${formattedPath}`;
 
     if (isVsCode && outputChannel) {
       outputChannel.appendLine(formattedMessage);
@@ -46,7 +46,7 @@ const logger = {
     const formattedPath = filePath
       ? ` [File: ${getRelativeFilePath(filePath)}]`
       : "";
-    const formattedMessage = `⚠️ [${moduleName}] ${message}${formattedPath}`;
+    const formattedMessage = `[WARN] [${moduleName}] ${message}${formattedPath}`;
 
     if (isVsCode && outputChannel) {
       outputChannel.appendLine(formattedMessage);
@@ -58,7 +58,7 @@ const logger = {
     const formattedPath = filePath
       ? ` [File: ${getRelativeFilePath(filePath)}]`
       : "";
-    const formattedMessage = `❌ [${moduleName}] ${message}${formattedPath}`;
+    const formattedMessage = `[ERROR] [${moduleName}] ${message}${formattedPath}`;
 
     if (isVsCode && outputChannel) {
       outputChannel.appendLine(formattedMessage);

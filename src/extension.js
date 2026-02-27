@@ -32,7 +32,7 @@ function registerConditionalCommand(commandName, configKey, handler) {
 }
 
 function registerCommands() {
-  logger.log("🛠 Registering Clipster commands...", moduleName, __filename);
+  logger.log("Registering Clipster commands...", moduleName, __filename);
 
   const config = vscode.workspace.getConfiguration("clipster");
   const additionalIgnores = config.get("additionalIgnores", []);
@@ -122,7 +122,7 @@ function registerCommands() {
           : uri.fsPath;
         const result = getFolderStructure(folderPath, additionalIgnores);
 
-        await copyToClipboard(result, "📁 Folder structure copied!");
+        await copyToClipboard(result, "Folder structure copied.");
       } catch (error) {
         vscode.window.showErrorMessage(
           `Failed to copy folder structure: ${error.message}`
@@ -140,14 +140,14 @@ function registerCommands() {
     "clipster.copyFolderStructureAndContent",
     async (uri) => {
       logger.log(
-        `🔍 Received URI: ${JSON.stringify(uri)}`,
+        `Received URI: ${JSON.stringify(uri)}`,
         "copyFolderStructureAndContent",
         __filename
       );
 
       if (!uri) {
         logger.error(
-          "⚠️ No URI received! Falling back to workspace root.",
+          "No URI received. Falling back to workspace root.",
           "copyFolderStructureAndContent",
           __filename
         );
@@ -170,16 +170,16 @@ function registerCommands() {
         );
         await copyToClipboard(
           result,
-          "📁 Folder structure and content copied successfully!"
+          "Folder structure and content copied."
         );
         logger.log(
-          "✅ Folder structure and content copied successfully!",
+          "Folder structure and content copied.",
           "copyFolderStructureAndContent",
           __filename
         );
       } catch (error) {
         logger.error(
-          `❌ Error copying folder structure and content: ${error.message}`,
+          `Error copying folder structure and content: ${error.message}`,
           "copyFolderStructureAndContent",
           __filename
         );
@@ -203,8 +203,8 @@ function registerCommands() {
         }
 
         // Add formatting here instead of in fileHelpers
-        const formattedPath = `📁 Root Path: ${rootPath}`;
-        await copyToClipboard(formattedPath, "📁 Root path copied!");
+        const formattedPath = `Root Path: ${rootPath}`;
+        await copyToClipboard(formattedPath, "Root path copied.");
       } catch (error) {
         vscode.window.showErrorMessage(error.message);
         logger.error(error.message, moduleName, __filename);
@@ -218,7 +218,7 @@ function registerCommands() {
     async () => {
       try {
         const result = copyRootFolderStructure(additionalIgnores);
-        await copyToClipboard(result, "📁 Root folder structure copied!");
+        await copyToClipboard(result, "Root folder structure copied.");
       } catch (error) {
         vscode.window.showErrorMessage(
           `Failed to copy root folder structure: ${error.message}`
@@ -240,7 +240,7 @@ function registerCommands() {
         const result = copyRootFolderStructureAndContent(additionalIgnores);
         await copyToClipboard(
           result,
-          "📁 Root folder structure and content copied!"
+          "Root folder structure and content copied."
         );
       } catch (error) {
         vscode.window.showErrorMessage(
@@ -275,11 +275,11 @@ function registerCommands() {
     }
   );
 
-  logger.log("✅ Commands registered.", moduleName, __filename);
+  logger.log("Commands registered.", moduleName, __filename);
 }
 
 function activate(context) {
-  logger.log("🔥 Clipster is activating...", moduleName, __filename);
+  logger.log("Clipster is activating...", moduleName, __filename);
   registerCommands();
 
   context.subscriptions.push(
@@ -291,11 +291,11 @@ function activate(context) {
     new vscode.Disposable(() => disposables.forEach((d) => d.dispose()))
   );
 
-  logger.log("✅ Clipster successfully activated!", moduleName, __filename);
+  logger.log("Clipster activated.", moduleName, __filename);
 }
 
 function deactivate() {
-  logger.log("🛑 Clipster is deactivating...", moduleName, __filename);
+  logger.log("Clipster is deactivating...", moduleName, __filename);
   disposables.forEach((d) => d.dispose());
   disposables = [];
 }

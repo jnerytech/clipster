@@ -24,7 +24,7 @@ export const filterIgnoredFiles = (
 ) => {
   if (!Array.isArray(files)) {
     logger.error(
-      `❌ Expected an array but received: ${typeof files}`,
+      `Expected an array but received: ${typeof files}`,
       "filterIgnoredFiles",
       __filename
     );
@@ -33,7 +33,7 @@ export const filterIgnoredFiles = (
 
   if (!dir || typeof dir !== "string") {
     logger.error(
-      `❌ Invalid directory path: ${JSON.stringify(dir)}`,
+      `Invalid directory path: ${JSON.stringify(dir)}`,
       "filterIgnoredFiles",
       __filename
     );
@@ -60,7 +60,7 @@ export const filterIgnoredFiles = (
       );
     } catch (error) {
       logger.error(
-        `⚠️ Failed to read .gitignore: ${error.message}`,
+        `Failed to read .gitignore: ${error.message}`,
         "filterIgnoredFiles",
         __filename
       );
@@ -91,7 +91,7 @@ export const filterIgnoredFiles = (
       return !ig.ignores(relativePath);
     } catch (error) {
       logger.error(
-        `⚠️ Failed to process file: ${file} - ${error.message}`,
+        `Failed to process file: ${file} - ${error.message}`,
         "filterIgnoredFiles",
         __filename
       );
@@ -107,7 +107,7 @@ export const filterIgnoredFiles = (
  */
 export const showClipsterLogger = () => {
   logger.log(
-    "📢 Clipster Logger Display Requested",
+    "Clipster Logger Display Requested",
     "showClipsterLogger",
     __filename
   );

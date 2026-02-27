@@ -40,10 +40,10 @@
 //       normalizeSlashes(getFolderStructure("/mocked/workspace/project"))
 //     );
 //     const expected = systemLineEnding(
-//       `📦 workspace
-// 🖥️ ${normalizeSlashes(
+//       `workspace
+// Path: ${normalizeSlashes(
 //         path.join("/mocked", "workspace", "project")
-//       )}${getSystemLineEnding()}📂 project${getSystemLineEnding()}┣ 📂 Ohoh${getSystemLineEnding()}┃ ┗ 📄 yalla.txt${getSystemLineEnding()}┗ 📄 file.txt${getSystemLineEnding()}`
+//       )}${getSystemLineEnding()}project/${getSystemLineEnding()}┣ Ohoh/${getSystemLineEnding()}┃ ┗ yalla.txt${getSystemLineEnding()}┗ file.txt${getSystemLineEnding()}`
 //     );
 
 //     assert.equal(result, expected);
@@ -89,10 +89,10 @@
 //       normalizeSlashes(copyRootFolderWithContent(rootPath))
 //     );
 //     const expected = systemLineEnding(
-//       `📦 workspace
-// 🖥️ ${normalizeSlashes(
+//       `workspace
+// Path: ${normalizeSlashes(
 //         path.join("/mocked", "workspace", "project")
-//       )}${getSystemLineEnding()}📂 project${getSystemLineEnding()}┣ 📂 Ohoh${getSystemLineEnding()}┃ ┗ 📄 yalla.txt${getSystemLineEnding()}┗ 📄 file.txt${getSystemLineEnding()}File content: File content${getSystemLineEnding()}`
+//       )}${getSystemLineEnding()}project/${getSystemLineEnding()}┣ Ohoh/${getSystemLineEnding()}┃ ┗ yalla.txt${getSystemLineEnding()}┗ file.txt${getSystemLineEnding()}File content: File content${getSystemLineEnding()}`
 //     );
 
 //     assert.equal(result, expected);
