@@ -143,7 +143,7 @@ export const copyRootFolderStructureAndContent = (
   return content;
 };
 
-const isValidPath = (filePath: string): boolean => {
+export const isValidPath = (filePath: string): boolean => {
   const baseName = path.basename(filePath);
   const invalidChars =
     process.platform === "win32"
