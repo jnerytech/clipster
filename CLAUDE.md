@@ -6,7 +6,7 @@
 
 - **Version**: 1.2.106 (see `package.json` / `.version`)
 - **VS Code engine**: `^1.93.0`
-- **Entry point**: `src/extension.js` → compiled to `dist/extension.js`
+- **Entry point**: `src/extension.ts` → compiled to `dist/extension.js`
 - **Repository**: https://github.com/TheJesper/clipster
 
 ---
@@ -17,25 +17,20 @@
 
 | File | Role |
 |---|---|
-| `extension.js` | VS Code extension entry point – registers all commands via `activate()` |
-| `fileHelpers.js` | Core logic: folder structure, file content, create-from-clipboard operations |
-| `main.js` | Higher-level command handlers that wrap `fileHelpers` functions |
-| `ignoreHelper.js` | Filters files using `.gitignore` + `clipster.additionalIgnores` (uses `ignore` package) |
-| `clipboardHelper.js` | Thin wrapper around `vscode.env.clipboard.writeText` |
-| `fileUtils.js` | `isFile`, `readFileContent`, copy/paste file helpers |
-| `directoryUtils.js` | Recursive directory traversal |
-| `structureFormatter.js` | Formats root-folder header for clipboard output |
-| `pathUtils.js` | `getBaseDirectory`, `resolveTargetPath` helpers |
-| `messageUtils.js` | Wraps `vscode.window.showErrorMessage` / `showInformationMessage` |
-| `logger.js` | Lightweight logger that writes to a VS Code Output Channel |
-| `command/commandHandlers.js` | Additional command handler functions |
-| `command/commandManager.js` | Command registration helpers |
+| `extension.ts` | VS Code extension entry point – registers all commands via `activate()` |
+| `fileHelpers.ts` | Core logic: folder structure, file content, create-from-clipboard operations |
+| `ignoreHelper.ts` | Filters files using `.gitignore` + `clipster.additionalIgnores` (uses `ignore` package) |
+| `clipboardHelper.ts` | Thin wrapper around `vscode.env.clipboard.writeText` |
+| `fileUtils.ts` | `isFile`, `readFileContent`, copy/paste file helpers |
+| `directoryUtils.ts` | Recursive directory traversal |
+| `structureFormatter.ts` | Formats root-folder header for clipboard output |
+| `pathUtils.ts` | `getBaseDirectory`, `resolveTargetPath` helpers |
+| `messageUtils.ts` | Wraps `vscode.window.showErrorMessage` / `showInformationMessage` |
+| `logger.ts` | Lightweight logger that writes to a VS Code Output Channel |
 
 ### Module system note
 
-`extension.js` uses **CommonJS** (`require` / `module.exports`).
-All other source files use **ESM** (`import` / `export`).
-Babel (`@babel/preset-env`) transpiles ESM → CJS during the Webpack build.
+All source files use **TypeScript** and are compiled to CommonJS by `ts-loader` during the Webpack build.
 
 ---
 
@@ -62,7 +57,7 @@ All commands are surfaced under a **Clipster** submenu in the Explorer context m
 | Tool | Config file | Purpose |
 |---|---|---|
 | Webpack 5 | `webpack.config.cjs` | Bundles extension into `dist/extension.js` |
-| Babel | `.babelrc` | Transpiles ESM → CJS; presets: `@babel/preset-env` |
+| TypeScript | `tsconfig.json` | Type-checks and compiles `.ts` sources via `ts-loader` |
 | standard-version | — | Automated semantic versioning |
 | rimraf | — | Clean `out/` directory |
 
@@ -85,7 +80,8 @@ npm run release             # standard-version release
 | Tool | Config |
 |---|---|
 | Jest 29 | `jest.config.js` |
-| VS Code mock | `src/test/__mocks__/vscode.js` |
+| ts-jest | `jest.config.js` (`preset: "ts-jest"`) |
+| VS Code mock | `src/test/__mocks__/vscode.ts` |
 
 ```bash
 npm test             # Run all Jest tests with coverage
@@ -95,7 +91,7 @@ npm run test:failed  # Re-run only previously failing tests
 
 ### Test file status
 
-- `src/test/logger.test.js` — **active** (only passing test suite)
+- `src/test/logger.test.ts` — **active** (only passing test suite)
 - `src/test/*.jsREM` — disabled (renamed with `.jsREM` extension)
 - `test/` — Mocha/VS Code integration test scaffold (not fully wired)
 
@@ -125,7 +121,7 @@ npm run test:failed  # Re-run only previously failing tests
 
 ## Ignore Handling
 
-`src/ignoreHelper.js` (`filterIgnoredFiles`) merges:
+`src/ignoreHelper.ts` (`filterIgnoredFiles`) merges:
 1. `.gitignore` from the workspace root
 2. `clipster.additionalIgnores` setting
 
@@ -139,7 +135,9 @@ It uses the [`ignore`](https://www.npmjs.com/package/ignore) npm package to appl
 |---|---|
 | `ignore` | gitignore-style file filtering |
 | `picomatch` | Glob matching |
-| `webpack` + `babel-loader` | Build/transpile |
+| `webpack` + `ts-loader` | Build/transpile |
+| `ts-jest` | Jest TypeScript transform |
+| `@types/jest`, `@types/node`, `@types/vscode` | TypeScript type definitions |
 | `jest` | Unit testing |
 | `standard-version` | Versioning/changelog |
 | `@vscode/vsce` | Package and publish the extension |
@@ -148,8 +146,5 @@ It uses the [`ignore`](https://www.npmjs.com/package/ignore) npm package to appl
 
 ## Known Issues / Gotchas
 
-1. **Import typo in `extension.js`**: imports `copyFilecopyFileContentWithPath` from `fileHelpers.js` (line 14) but calls `copyFileContentWithPath` — the function referenced at call sites is the correctly named ESM export; Webpack resolves this during bundling, but it's a latent inconsistency.
-2. **Mixed module systems**: `extension.js` is CJS while all helpers are ESM. Babel handles this in the bundle, but running helpers directly with Node.js requires transpilation.
-3. **Tests disabled**: Most test files carry a `.jsREM` suffix, excluding them from Jest. Only `logger.test.js` is active. Restoring tests requires renaming files back to `.test.js` and fixing any broken imports.
-4. **`main.js` is not the extension entry**: `src/main.js` contains handler wrappers but is not wired into Webpack as an entry point. `extension.js` duplicates some of this logic inline.
-5. **`clipster.showSystemCopyPaste` config key**: `extension.js` checks `config.get("clipster.showSystemCopyPaste", true)` but this setting is not declared in `package.json`'s `contributes.configuration` — it always evaluates to the default `true`.
+1. **Tests disabled**: Most test files carry a `.jsREM` suffix, excluding them from Jest. Only `logger.test.ts` is active. Restoring tests requires renaming files back to `.test.ts` and fixing any broken imports.
+2. **`clipster.showSystemCopyPaste` config key**: `extension.ts` checks `config.get("clipster.showSystemCopyPaste", true)` but this setting is not declared in `package.json`'s `contributes.configuration` — it always evaluates to the default `true`.
