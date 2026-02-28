@@ -6,9 +6,5 @@ module.exports = {
     "^vscode$": "<rootDir>/src/test/__mocks__/vscode.ts",
   },
   testMatch: ["**/*.test.ts"],
-  collectCoverageFrom: [
-    "src/**/*.ts",
-    "!src/test/**",
-    "!src/**/*.d.ts",
-  ],
+  collectCoverageFrom: ["src/**/*.ts", "!src/test/**", "!src/**/*.d.ts"],
 };

@@ -10,8 +10,7 @@ export const copyToClipboard = async (
   try {
     await vscode.env.clipboard.writeText(text);
     vscode.window.showInformationMessage(successMessage);
-    const preview =
-      text.length > 50 ? `${text.substring(0, 50)}...` : text;
+    const preview = text.length > 50 ? `${text.substring(0, 50)}...` : text;
     logger.log(`Successfully copied: ${preview}`, "clipboardHelper", __filename);
   } catch (error) {
     vscode.window.showErrorMessage(errorMessage);

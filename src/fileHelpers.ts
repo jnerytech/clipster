@@ -32,12 +32,8 @@ export const copyRootFolderPath = (): string => {
   return vscode.workspace.workspaceFolders[0].uri.fsPath;
 };
 
-export const getFolderStructure = (
-  dir: string,
-  additionalIgnores: string[] = []
-): string => {
-  const workspaceRoot =
-    vscode.workspace.workspaceFolders?.[0]?.uri?.fsPath;
+export const getFolderStructure = (dir: string, additionalIgnores: string[] = []): string => {
+  const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri?.fsPath;
   if (!workspaceRoot) {
     logger.error("No workspace root found", "fileHelpers", __filename);
     return "No workspace open";
@@ -51,11 +47,8 @@ export const getFolderStructure = (
   return structure;
 };
 
-export const copyRootFolderStructure = (
-  additionalIgnores: string[] = []
-): string => {
-  const workspaceRoot =
-    vscode.workspace.workspaceFolders?.[0]?.uri?.fsPath;
+export const copyRootFolderStructure = (additionalIgnores: string[] = []): string => {
+  const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri?.fsPath;
   if (!workspaceRoot) {
     logger.error("No workspace root found", "fileHelpers", __filename);
     return "No workspace root found.";
@@ -63,11 +56,8 @@ export const copyRootFolderStructure = (
   return getFolderStructure(workspaceRoot, additionalIgnores);
 };
 
-export const copyRootFolderStructureAndContent = (
-  additionalIgnores: string[] = []
-): string => {
-  const workspaceRoot =
-    vscode.workspace.workspaceFolders?.[0]?.uri?.fsPath;
+export const copyRootFolderStructureAndContent = (additionalIgnores: string[] = []): string => {
+  const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri?.fsPath;
   if (!workspaceRoot) {
     logger.error("No workspace root found", "fileHelpers", __filename);
     return "No workspace root found.";
@@ -116,10 +106,7 @@ export const copyRootFolderStructureAndContent = (
       }
 
       if (stats.isFile()) {
-        if (
-          totalSize + stats.size > maxSizeKB * 1024 ||
-          fileCount >= maxFiles
-        ) {
+        if (totalSize + stats.size > maxSizeKB * 1024 || fileCount >= maxFiles) {
           vscode.window.showWarningMessage(
             `Reached limit: ${fileCount} files or ${maxSizeKB} KB total`
           );
@@ -145,10 +132,7 @@ export const copyRootFolderStructureAndContent = (
 
 export const isValidPath = (filePath: string): boolean => {
   const baseName = path.basename(filePath);
-  const invalidChars =
-    process.platform === "win32"
-      ? /[<>:"/\\|?*\x00-\x1F]/g
-      : /[/\x00]/g;
+  const invalidChars = process.platform === "win32" ? /[<>:"/\\|?*\x00-\x1F]/g : /[/\x00]/g;
   return !invalidChars.test(baseName);
 };
 
@@ -195,11 +179,7 @@ export const createFileOrFolderFromClipboard = async (
   for (const line of lines) {
     if (!isValidPath(line)) {
       showErrorMessage(`Invalid path: '${line}'`);
-      logger.error(
-        `Invalid path: ${line}`,
-        "createFileOrFolderFromClipboard",
-        __filename
-      );
+      logger.error(`Invalid path: ${line}`, "createFileOrFolderFromClipboard", __filename);
       errorsOccurred++;
       continue;
     }
@@ -215,25 +195,15 @@ export const createFileOrFolderFromClipboard = async (
       if (isDirectory) {
         fs.mkdirSync(targetPath, { recursive: true });
         foldersCreated++;
-        logger.log(
-          `Created folder: ${targetPath}`,
-          "createFileOrFolderFromClipboard",
-          __filename
-        );
+        logger.log(`Created folder: ${targetPath}`, "createFileOrFolderFromClipboard", __filename);
       } else {
         fs.mkdirSync(path.dirname(targetPath), { recursive: true });
         fs.writeFileSync(targetPath, "");
         filesCreated++;
-        logger.log(
-          `Created file: ${targetPath}`,
-          "createFileOrFolderFromClipboard",
-          __filename
-        );
+        logger.log(`Created file: ${targetPath}`, "createFileOrFolderFromClipboard", __filename);
       }
     } catch (err) {
-      showErrorMessage(
-        `Failed to create: ${line} - ${(err as Error).message}`
-      );
+      showErrorMessage(`Failed to create: ${line} - ${(err as Error).message}`);
       logger.error(
         `Error creating path: ${targetPath} - ${(err as Error).message}`,
         "createFileOrFolderFromClipboard",
@@ -251,9 +221,7 @@ export const createFileOrFolderFromClipboard = async (
   logger.log(summary, "createFileOrFolderFromClipboard", __filename);
 };
 
-export const copyFileContentWithPath = async (
-  uris: vscode.Uri[]
-): Promise<void> => {
+export const copyFileContentWithPath = async (uris: vscode.Uri[]): Promise<void> => {
   const content = uris
     .map((uri) => {
       const filePath = uri.fsPath;
@@ -264,18 +232,10 @@ export const copyFileContentWithPath = async (
 
   try {
     await vscode.env.clipboard.writeText(content);
-    vscode.window.showInformationMessage(
-      `${uris.length} file(s) copied with paths.`
-    );
+    vscode.window.showInformationMessage(`${uris.length} file(s) copied with paths.`);
   } catch (err) {
-    vscode.window.showErrorMessage(
-      `Failed to copy files: ${(err as Error).message}`
-    );
-    logger.error(
-      `Failed to copy files: ${(err as Error).message}`,
-      "fileHelpers",
-      __filename
-    );
+    vscode.window.showErrorMessage(`Failed to copy files: ${(err as Error).message}`);
+    logger.error(`Failed to copy files: ${(err as Error).message}`, "fileHelpers", __filename);
   }
 };
 
@@ -300,16 +260,9 @@ export const getFolderStructureAndContent = (
   }
 
   // Establish workspaceRoot on the first (top-level) call
-  const root =
-    workspaceRoot ??
-    vscode.workspace.workspaceFolders?.[0]?.uri?.fsPath ??
-    dir;
+  const root = workspaceRoot ?? vscode.workspace.workspaceFolders?.[0]?.uri?.fsPath ?? dir;
 
-  logger.log(
-    `Scanning folder: ${dir}`,
-    "getFolderStructureAndContent",
-    __filename
-  );
+  logger.log(`Scanning folder: ${dir}`, "getFolderStructureAndContent", __filename);
 
   let structure = `${path.basename(dir)}\n`;
   let rawEntries: fs.Dirent[];
@@ -348,12 +301,7 @@ export const getFolderStructureAndContent = (
 
     if (stats.isDirectory()) {
       // Pass the same root down — fixes the bug where dir was used as root
-      structure += getFolderStructureAndContent(
-        entryPath,
-        additionalIgnores,
-        root,
-        `${indent}┃ `
-      );
+      structure += getFolderStructureAndContent(entryPath, additionalIgnores, root, `${indent}┃ `);
     } else {
       try {
         const fileContent = fs.readFileSync(entryPath, "utf8");

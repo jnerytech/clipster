@@ -1,12 +1,6 @@
 // build.js
 const { execSync } = require("child_process");
-const {
-  mkdirSync,
-  readFileSync,
-  existsSync,
-  readdirSync,
-  statSync,
-} = require("fs");
+const { mkdirSync, readFileSync, existsSync, readdirSync, statSync } = require("fs");
 const path = require("path");
 
 // Paths
@@ -21,10 +15,9 @@ const packageExtension = () => {
     }
 
     const version = JSON.parse(readFileSync(packageJsonPath, "utf8")).version;
-    execSync(
-      `vsce package --out ${path.join(outDir, `clipster-${version}.vsix`)}`,
-      { stdio: "inherit" }
-    );
+    execSync(`vsce package --out ${path.join(outDir, `clipster-${version}.vsix`)}`, {
+      stdio: "inherit",
+    });
     console.log("Extension packaged successfully.");
   } catch (error) {
     console.error("Failed to package extension:", error);
@@ -34,9 +27,7 @@ const packageExtension = () => {
 
 // Step 2: Install the latest VSIX file from the 'out' directory
 const installLatestVsix = () => {
-  const vsixFiles = readdirSync(outDir).filter((file) =>
-    file.endsWith(".vsix")
-  );
+  const vsixFiles = readdirSync(outDir).filter((file) => file.endsWith(".vsix"));
 
   if (vsixFiles.length === 0) {
     console.error("No .vsix files found in 'out' directory.");

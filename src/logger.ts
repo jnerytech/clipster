@@ -15,8 +15,7 @@ if (!process.env.JEST_WORKER_ID) {
     const vscode = require("vscode") as typeof import("vscode");
     if (vscode?.window) {
       outputChannel = vscode.window.createOutputChannel("Clipster Logger");
-      getWorkspaceRoot = () =>
-        vscode?.workspace?.workspaceFolders?.[0]?.uri?.fsPath;
+      getWorkspaceRoot = () => vscode?.workspace?.workspaceFolders?.[0]?.uri?.fsPath;
     }
   } catch {
     // Not running inside VS Code (e.g. unit tests without the mock)
@@ -37,34 +36,20 @@ const format = (
   moduleName: string,
   filePath?: string | null
 ): string => {
-  const pathSuffix = filePath
-    ? ` [File: ${getRelativeFilePath(filePath)}]`
-    : "";
+  const pathSuffix = filePath ? ` [File: ${getRelativeFilePath(filePath)}]` : "";
   return `[${level}] [${moduleName}] ${message}${pathSuffix}`;
 };
 
 const logger = {
-  log(
-    message: string,
-    moduleName = "General",
-    filePath?: string | null
-  ): void {
+  log(message: string, moduleName = "General", filePath?: string | null): void {
     const msg = format("INFO", message, moduleName, filePath);
     outputChannel ? outputChannel.appendLine(msg) : console.log(msg);
   },
-  warn(
-    message: string,
-    moduleName = "General",
-    filePath?: string | null
-  ): void {
+  warn(message: string, moduleName = "General", filePath?: string | null): void {
     const msg = format("WARN", message, moduleName, filePath);
     outputChannel ? outputChannel.appendLine(msg) : console.warn(msg);
   },
-  error(
-    message: string,
-    moduleName = "General",
-    filePath?: string | null
-  ): void {
+  error(message: string, moduleName = "General", filePath?: string | null): void {
     const msg = format("ERROR", message, moduleName, filePath);
     outputChannel ? outputChannel.appendLine(msg) : console.error(msg);
   },

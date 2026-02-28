@@ -12,11 +12,7 @@ import {
   createFileOrFolderFromClipboard,
 } from "./fileHelpers";
 import { copyToClipboard } from "./clipboardHelper";
-import {
-  copyFileToClipboard,
-  pasteFileFromClipboard,
-  isFile,
-} from "./fileUtils";
+import { copyFileToClipboard, pasteFileFromClipboard, isFile } from "./fileUtils";
 
 const MODULE = "extension";
 let disposables: vscode.Disposable[] = [];
@@ -48,43 +44,23 @@ function registerCommands(): void {
   disposables = [];
 
   // Copy / Paste File — each protected by its own setting
-  registerConditionalCommand(
-    "clipster.copyFile",
-    "showCopyFile",
-    async (uri: vscode.Uri) => {
-      try {
-        await copyFileToClipboard(uri);
-      } catch (err) {
-        vscode.window.showErrorMessage(
-          `Failed to copy file: ${(err as Error).message}`
-        );
-        logger.error(
-          `Failed to copy file: ${(err as Error).message}`,
-          MODULE,
-          __filename
-        );
-      }
+  registerConditionalCommand("clipster.copyFile", "showCopyFile", async (uri: vscode.Uri) => {
+    try {
+      await copyFileToClipboard(uri);
+    } catch (err) {
+      vscode.window.showErrorMessage(`Failed to copy file: ${(err as Error).message}`);
+      logger.error(`Failed to copy file: ${(err as Error).message}`, MODULE, __filename);
     }
-  );
+  });
 
-  registerConditionalCommand(
-    "clipster.pasteFile",
-    "showPasteFile",
-    async (uri: vscode.Uri) => {
-      try {
-        await pasteFileFromClipboard(uri);
-      } catch (err) {
-        vscode.window.showErrorMessage(
-          `Failed to paste file: ${(err as Error).message}`
-        );
-        logger.error(
-          `Failed to paste file: ${(err as Error).message}`,
-          MODULE,
-          __filename
-        );
-      }
+  registerConditionalCommand("clipster.pasteFile", "showPasteFile", async (uri: vscode.Uri) => {
+    try {
+      await pasteFileFromClipboard(uri);
+    } catch (err) {
+      vscode.window.showErrorMessage(`Failed to paste file: ${(err as Error).message}`);
+      logger.error(`Failed to paste file: ${(err as Error).message}`, MODULE, __filename);
     }
-  );
+  });
 
   // Create File or Folder from Clipboard
   registerConditionalCommand(
@@ -121,9 +97,7 @@ function registerCommands(): void {
     async (uri: vscode.Uri) => {
       try {
         if (!uri) throw new Error("No URI received for copyFolderStructure");
-        const folderPath = isFile(uri.fsPath)
-          ? path.dirname(uri.fsPath)
-          : uri.fsPath;
+        const folderPath = isFile(uri.fsPath) ? path.dirname(uri.fsPath) : uri.fsPath;
         const result = getFolderStructure(folderPath, additionalIgnores);
         await copyToClipboard(result, "Folder structure copied.");
       } catch (err) {
@@ -158,18 +132,14 @@ function registerCommands(): void {
         );
         const fallback = vscode.workspace.workspaceFolders?.[0]?.uri;
         if (!fallback) {
-          vscode.window.showErrorMessage(
-            "No folder selected and no workspace found."
-          );
+          vscode.window.showErrorMessage("No folder selected and no workspace found.");
           return;
         }
         uri = fallback;
       }
 
       try {
-        const folderPath = isFile(uri.fsPath)
-          ? path.dirname(uri.fsPath)
-          : uri.fsPath;
+        const folderPath = isFile(uri.fsPath) ? path.dirname(uri.fsPath) : uri.fsPath;
         const result = getFolderStructureAndContent(folderPath, additionalIgnores);
         await copyToClipboard(result, "Folder structure and content copied.");
         logger.log(
@@ -190,20 +160,16 @@ function registerCommands(): void {
     }
   );
 
-  registerConditionalCommand(
-    "clipster.copyRootFolderPath",
-    "showCopyRootFolderPath",
-    async () => {
-      try {
-        const rootPath = copyRootFolderPath();
-        if (!rootPath.trim()) throw new Error("No valid workspace path found");
-        await copyToClipboard(`Root Path: ${rootPath}`, "Root path copied.");
-      } catch (err) {
-        vscode.window.showErrorMessage((err as Error).message);
-        logger.error((err as Error).message, MODULE, __filename);
-      }
+  registerConditionalCommand("clipster.copyRootFolderPath", "showCopyRootFolderPath", async () => {
+    try {
+      const rootPath = copyRootFolderPath();
+      if (!rootPath.trim()) throw new Error("No valid workspace path found");
+      await copyToClipboard(`Root Path: ${rootPath}`, "Root path copied.");
+    } catch (err) {
+      vscode.window.showErrorMessage((err as Error).message);
+      logger.error((err as Error).message, MODULE, __filename);
     }
-  );
+  });
 
   registerConditionalCommand(
     "clipster.copyRootFolderStructure",

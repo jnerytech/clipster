@@ -1,11 +1,7 @@
 import fs from "fs";
 import path from "path";
 import * as vscode from "vscode";
-import {
-  normalizeClipboardContent,
-  getBaseDirectory,
-  resolveTargetPath,
-} from "../pathUtils";
+import { normalizeClipboardContent, getBaseDirectory, resolveTargetPath } from "../pathUtils";
 
 jest.mock("fs");
 
@@ -15,8 +11,9 @@ describe("pathUtils", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     // restore default workspace mock
-    (vscode.workspace as unknown as { workspaceFolders: { uri: { fsPath: string } }[] }).workspaceFolders =
-      [{ uri: { fsPath: "/mock/workspace" } }];
+    (
+      vscode.workspace as unknown as { workspaceFolders: { uri: { fsPath: string } }[] }
+    ).workspaceFolders = [{ uri: { fsPath: "/mock/workspace" } }];
   });
 
   describe("normalizeClipboardContent", () => {
@@ -101,9 +98,7 @@ describe("pathUtils", () => {
 
     it("resolves backslash-separated path from workspace root", () => {
       const result = resolveTargetPath("src\\file.ts", "/base/dir");
-      expect(result).toBe(
-        path.normalize("/mock/workspace/src\\file.ts")
-      );
+      expect(result).toBe(path.normalize("/mock/workspace/src\\file.ts"));
     });
   });
 });

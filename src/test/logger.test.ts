@@ -27,29 +27,21 @@ describe("Logger Module", () => {
 
   test("logs messages with a specific module name", () => {
     logger.log("Test message", "TestModule");
-    expect(consoleLogSpy).toHaveBeenCalledWith(
-      "[INFO] [TestModule] Test message"
-    );
+    expect(consoleLogSpy).toHaveBeenCalledWith("[INFO] [TestModule] Test message");
   });
 
   test("logs warn messages", () => {
     logger.warn("Test warning", "WarnModule");
-    expect(consoleWarnSpy).toHaveBeenCalledWith(
-      "[WARN] [WarnModule] Test warning"
-    );
+    expect(consoleWarnSpy).toHaveBeenCalledWith("[WARN] [WarnModule] Test warning");
   });
 
   test("logs error messages with default module name", () => {
     logger.error("Test error");
-    expect(consoleErrorSpy).toHaveBeenCalledWith(
-      "[ERROR] [General] Test error"
-    );
+    expect(consoleErrorSpy).toHaveBeenCalledWith("[ERROR] [General] Test error");
   });
 
   test("logs error messages with a specific module name", () => {
     logger.error("Test error", "ErrorModule");
-    expect(consoleErrorSpy).toHaveBeenCalledWith(
-      "[ERROR] [ErrorModule] Test error"
-    );
+    expect(consoleErrorSpy).toHaveBeenCalledWith("[ERROR] [ErrorModule] Test error");
   });
 });
