@@ -21,11 +21,11 @@ describe.skip("Copy Root Folder Path Tests", () => {
   });
 
   it("should copy the root folder path successfully", async () => {
-    const expectedPath = "📁 Root Path: /mocked/workspace";
+    const expectedPath = "Root Path: /mocked/workspace";
     clipboardStub.resolves(); // Simulate successful clipboard copy
 
     const result = copyRootFolderPath();
-    await copyToClipboard(result, "📁 Root folder path copied successfully!");
+    await copyToClipboard(result, "Root folder path copied.");
 
     // Assert that clipboard was called with the correct path
     sinon.assert.calledWith(clipboardStub, expectedPath);
@@ -33,7 +33,7 @@ describe.skip("Copy Root Folder Path Tests", () => {
     // Assert that the success message was displayed
     sinon.assert.calledWith(
       showInfoMessageStub,
-      "📁 Root folder path copied successfully!"
+      "Root folder path copied."
     );
   });
 
@@ -41,7 +41,7 @@ describe.skip("Copy Root Folder Path Tests", () => {
     clipboardStub.rejects(); // Simulate failure to copy to clipboard
 
     const result = copyRootFolderPath();
-    await copyToClipboard(result, "📁 Root folder path copied successfully!");
+    await copyToClipboard(result, "Root folder path copied.");
 
     // Assert that the error message was displayed
     sinon.assert.calledWith(

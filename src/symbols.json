@@ -2,10 +2,10 @@
   "themes": {
     "default": {
       "icons": {
-        "folder": "📂",
-        "file": "📄",
-        "box": "📦",
-        "computer": "🖥️"
+        "folder": "",
+        "file": "",
+        "box": "",
+        "computer": ""
       },
       "treeSymbols": {
         "branch": "┣",
@@ -16,10 +16,10 @@
     },
     "alternative": {
       "icons": {
-        "folder": "📁",
-        "file": "📃",
-        "box": "📦",
-        "computer": "💻"
+        "folder": "",
+        "file": "",
+        "box": "",
+        "computer": ""
       },
       "treeSymbols": {
         "branch": "├",

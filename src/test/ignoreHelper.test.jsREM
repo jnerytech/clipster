@@ -32,12 +32,12 @@
 //       getFolderStructure("/mocked/workspace/project")
 //     );
 //     const expected = systemLineEnding(
-//       `📦 workspace
-// 🖥️ ${path.join("D:", "mocked", "workspace", "project")}
-// 📂 project
-// ┣ 📂 Ohoh
-// ┃ ┗ 📄 yalla.txt
-// ┗ 📄 file.txt
+//       `workspace
+// Path: ${path.join("D:", "mocked", "workspace", "project")}
+// project/
+// ┣ Ohoh/
+// ┃ ┗ yalla.txt
+// ┗ file.txt
 // `
 //     );
 //     assert.equal(result, expected);

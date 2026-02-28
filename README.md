@@ -1,25 +1,25 @@
 # Clipster
 
-A minimal VS Code extension to copy file paths, folder structures, and contents from the file explorer to the clipboard so that it can be shared with ChatGPT, Gemini, Perplexity, or even real humans 😊. Feedback === ❤️
+A minimal VS Code extension to copy file paths, folder structures, and contents from the file explorer to the clipboard so that it can be shared with ChatGPT, Gemini, Perplexity, or even real humans.
 
 ## Features
 
-- 📋 **Create File or Folder from Clipboard**: Creates one or multiple files or folders based on the paths in your clipboard.
+- **Create File or Folder from Clipboard**: Creates one or multiple files or folders based on the paths in your clipboard.
 
-- 📁 **Copy Folder Structure**: Copies the folder structure without including file contents.
-- 📁 **Copy Folder Structure and Content**: Copies the folder structure along with file contents.
-- 📝 **Copy File Content with Path**: Copies both the file's content and its full path to the clipboard.
-- 📁 **Copy Root Folder Path**: Copies the path of the root folder.
-- 📁 **Copy Root Folder Structure**: Copies the root folder's structure without file contents.
-- 📝 **Copy Root Folder Structure and Content**: Copies the root folder's structure along with all file contents.
+- **Copy Folder Structure**: Copies the folder structure without including file contents.
+- **Copy Folder Structure and Content**: Copies the folder structure along with file contents.
+- **Copy File Content with Path**: Copies both the file's content and its full path to the clipboard.
+- **Copy Root Folder Path**: Copies the path of the root folder.
+- **Copy Root Folder Structure**: Copies the root folder's structure without file contents.
+- **Copy Root Folder Structure and Content**: Copies the root folder's structure along with all file contents.
 
-### 🆕 **Copy and Paste Files**
+### **Copy and Paste Files**
 
-- 📄 **Copy File**: Copies a file's path to the clipboard, enabling it to be pasted into another folder.
-- 📄 **Paste File**: Pastes a previously copied file into the selected folder.
-- 📄 **Copy File Contents**: Copies only the contents of a file to the clipboard (without its path).
+- **Copy File**: Copies a file's path to the clipboard, enabling it to be pasted into another folder.
+- **Paste File**: Pastes a previously copied file into the selected folder.
+- **Copy File Contents**: Copies only the contents of a file to the clipboard (without its path).
 
-Now you can copy and paste files just like in Windows Explorer! 🎉
+Now you can copy and paste files just like in Windows Explorer! 
 
 ## Usage
 
@@ -32,7 +32,7 @@ To create one or multiple files or folders from clipboard content:
 
 1. **Copy** the paths of the files or folders you wish to create to your clipboard. Each path should be on a new line for multiple items.
 2. **Right-click** on the directory in the VS Code explorer where you want to create the new files or folders.
-3. **Select** **📋 Create File or Folder from Clipboard** from the **Clipster** menu.
+3. **Select** **Create File or Folder from Clipboard** from the **Clipster** menu.
 4. **Confirm** the action when prompted.
 
 **Note:** When your clipboard contains multiple lines, Clipster will ask for confirmation before proceeding to create the files or folders. This is to prevent accidental creation from unintended clipboard content.
@@ -53,24 +53,24 @@ The extension will create the files or folders at the specified paths, relative 
 
 ### Copy and Paste Files
 
-- **Copy File**: Right-click a file and select **📄 Copy File** to store its path in the clipboard.
-- **Paste File**: Right-click a folder and select **📄 Paste File** to paste the copied file into the selected folder.
-- **Copy File Contents**: Right-click a file and select **📄 Copy File Contents** to copy only the content of the file (without its path) to the clipboard.
+- **Copy File**: Right-click a file and select **Copy File** to store its path in the clipboard.
+- **Paste File**: Right-click a folder and select **Paste File** to paste the copied file into the selected folder.
+- **Copy File Contents**: Right-click a file and select **Copy File Contents** to copy only the content of the file (without its path) to the clipboard.
 
 ## Example
 
 Here is an example of a copied folder structure:
 
 ```
-📦 clipster
-🖥️ c:\projects\clipster
-┣ 📂 src
-┃ ┣ 📂 utils
-┃ ┃ ┗ 📄 helper.js
-┃ ┗ 📄 main.js
-┣ 📂 assets
-┃ ┗ 📄 logo.png
-┗ 📄 README.md
+clipster
+Path: c:\projects\clipster
+┣ src/
+┃ ┣ utils/
+┃ ┃ ┗ helper.js
+┃ ┗ main.js
+┣ assets/
+┃ ┗ logo.png
+┗ README.md
 ```
 
 This feature helps you easily share the structure of your projects with others, humans or androids!
@@ -79,7 +79,7 @@ This feature helps you easily share the structure of your projects with others, 
 
 You can customize Clipster's behavior through the following settings in the VS Code settings:
 
-⚙️ **To access settings**: Go to **File > Preferences > Settings** (Windows/Linux) or **Code > Preferences > Settings** (macOS), then search for "Clipster".
+**To access settings**: Go to **File > Preferences > Settings** (Windows/Linux) or **Code > Preferences > Settings** (macOS), then search for "Clipster".
 
 - **Clipster: Show Create File from Clipboard** (`clipster.showCreateFileFromClipboard`): Enable or disable creating files or folders from clipboard content.
 - **Clipster: Show Copy Folder Structure** (`clipster.showCopyFolderStructure`): Enable or disable copying the folder structure.
@@ -122,4 +122,4 @@ Run `npm run clean-build-install` to build and install the extension locally.
 
 This project is licensed under the MIT License.
 
-**Disclaimer**: Please provide feedback to help us improve 🤙 Ps. Might contain traces of AI-produced code 😁
+**Disclaimer**: Please provide feedback to help us improve 
