@@ -1,0 +1,36 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "npm",
+      "script": "webpack",
+      "group": "build",
+      "label": "npm: webpack",
+      "detail": "Development Webpack bundle",
+      "isBackground": false,
+      "problemMatcher": ["$ts-webpack-watch"]
+    },
+    {
+      "type": "npm",
+      "script": "build",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "label": "npm: build",
+      "detail": "Type-check + production Webpack bundle",
+      "isBackground": false,
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "type": "npm",
+      "script": "test",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "label": "npm: test",
+      "detail": "Run all Jest tests with coverage"
+    }
+  ]
+}
