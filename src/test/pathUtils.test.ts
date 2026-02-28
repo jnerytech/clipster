@@ -14,6 +14,8 @@ describe("pathUtils", () => {
     (
       vscode.workspace as unknown as { workspaceFolders: { uri: { fsPath: string } }[] }
     ).workspaceFolders = [{ uri: { fsPath: "/mock/workspace" } }];
+    // resolveTargetPath uses realpathSync to compare real paths; behave as identity in tests
+    (mockFs.realpathSync as unknown as jest.Mock).mockImplementation((p: string) => p);
   });
 
   describe("normalizeClipboardContent", () => {

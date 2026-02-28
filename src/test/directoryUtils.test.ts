@@ -8,7 +8,7 @@ const mockFs = jest.mocked(fs);
 
 /** Helper to create a minimal Dirent-like object. */
 function makeDirent(name: string): fs.Dirent {
-  return { name } as unknown as fs.Dirent;
+  return { name, isDirectory: () => false, isSymbolicLink: () => false } as unknown as fs.Dirent;
 }
 
 describe("directoryUtils", () => {

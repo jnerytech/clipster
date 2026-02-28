@@ -1,4 +1,5 @@
 import fs from "fs";
+import path from "path";
 import * as vscode from "vscode";
 import { isFile, readFileContent, copyFileToClipboard, pasteFileFromClipboard } from "../fileUtils";
 
@@ -11,6 +12,8 @@ describe("fileUtils", () => {
     jest.clearAllMocks();
     (vscode.env.clipboard.writeText as jest.Mock).mockResolvedValue(undefined);
     (vscode.env.clipboard.readText as jest.Mock).mockResolvedValue("");
+    // pasteFileFromClipboard uses realpathSync to compare real paths; behave as identity in tests
+    (mockFs.realpathSync as unknown as jest.Mock).mockImplementation((p: string) => p);
   });
 
   describe("isFile", () => {
@@ -146,7 +149,9 @@ describe("fileUtils", () => {
       mockFs.mkdirSync.mockReturnValue(undefined);
       const targetUri = { fsPath: dest } as vscode.Uri;
       await pasteFileFromClipboard(targetUri);
-      expect(mockFs.mkdirSync).toHaveBeenCalledWith(`${dest}/myFolder`, { recursive: true });
+      expect(mockFs.mkdirSync).toHaveBeenCalledWith(path.join(dest, "myFolder"), {
+        recursive: true,
+      });
       expect(vscode.window.showInformationMessage).toHaveBeenCalledWith("Folder pasted: myFolder");
     });
   });
