@@ -4,7 +4,7 @@
 
 **Clipster** is a VS Code extension (publisher: `conzeon`) that lets users copy file paths, folder structures, and file contents from the VS Code Explorer to the clipboard, as well as create files/folders from clipboard content and copy/paste files between folders.
 
-- **Version**: 1.2.106 (see `package.json` / `.version`)
+- **Version**: 1.2.106 (see `package.json`)
 - **VS Code engine**: `^1.93.0`
 - **Entry point**: `src/extension.ts` → compiled to `dist/extension.js`
 - **Repository**: https://github.com/TheJesper/clipster
@@ -17,7 +17,7 @@
 
 | File | Role |
 |---|---|
-| `extension.ts` | VS Code extension entry point – registers all commands via `activate()` |
+| `extension.ts` | VS Code extension entry point – registers all commands via `activate()`, re-registers on config change |
 | `fileHelpers.ts` | Core logic: folder structure, file content, create-from-clipboard operations |
 | `ignoreHelper.ts` | Filters files using `.gitignore` + `clipster.additionalIgnores` (uses `ignore` package) |
 | `clipboardHelper.ts` | Thin wrapper around `vscode.env.clipboard.writeText` |
@@ -30,7 +30,13 @@
 
 ### Module system note
 
-All source files use **TypeScript** and are compiled to CommonJS by `ts-loader` during the Webpack build.
+All source files use **TypeScript** (`ES2020` target) and are compiled to CommonJS by `ts-loader` during the Webpack build.
+
+### Extension lifecycle
+
+- `activate()` calls `registerCommands()` and subscribes to `onDidChangeConfiguration`
+- Any change to a `clipster.*` setting triggers a full re-registration of all commands
+- `deactivate()` disposes all registered command disposables
 
 ---
 
@@ -48,7 +54,7 @@ All source files use **TypeScript** and are compiled to CommonJS by `ts-loader` 
 | `clipster.copyFile` | Copy File(s) and/or Folder(s) |
 | `clipster.pasteFile` | Paste File(s) and/or Folder(s) |
 
-All commands are surfaced under a **Clipster** submenu in the Explorer context menu. Each command can be individually toggled via VS Code settings.
+All commands are surfaced under a **Clipster** submenu in the Explorer context menu. Each command is conditionally registered via `registerConditionalCommand()` based on its corresponding `clipster.*` boolean setting.
 
 ---
 
@@ -56,7 +62,7 @@ All commands are surfaced under a **Clipster** submenu in the Explorer context m
 
 | Tool | Config file | Purpose |
 |---|---|---|
-| Webpack 5 | `webpack.config.cjs` | Bundles extension into `dist/extension.js` |
+| Webpack 5 | `webpack.config.cjs` | Bundles extension into `dist/extension.js`; copies `resources/**/*` to `dist/` via `CopyPlugin` |
 | TypeScript | `tsconfig.json` | Type-checks and compiles `.ts` sources via `ts-loader` |
 | standard-version | — | Automated semantic versioning |
 | rimraf | — | Clean `out/` directory |
@@ -64,8 +70,9 @@ All commands are surfaced under a **Clipster** submenu in the Explorer context m
 ### Common build commands
 
 ```bash
-npm run build               # Production Webpack bundle
-npm run webpack             # Development Webpack bundle
+npm run type-check          # Type-check only (tsc --noEmit)
+npm run build               # Type-check + production Webpack bundle
+npm run webpack             # Development Webpack bundle (no type-check)
 npm run clean               # Remove ./out
 npm run bump-build          # Bump version + production build
 npm run clean-build-install # Full clean → bump → build → install
@@ -91,11 +98,20 @@ npm run test:failed  # Re-run only previously failing tests
 
 ### Test file status
 
-- `src/test/logger.test.ts` — **active** (only passing test suite)
-- `src/test/*.jsREM` — disabled (renamed with `.jsREM` extension)
-- `test/` — Mocha/VS Code integration test scaffold (not fully wired)
+All test files in `src/test/` are active `.test.ts` files. Note that `jest` must be installed (`npm install`) before tests can run.
 
-> **Note**: The README explicitly states "The tests are currently not passing." Most test files have been renamed `.jsREM` to exclude them from the Jest run.
+| Test file | Coverage area |
+|---|---|
+| `logger.test.ts` | Logger output channel |
+| `clipboardHelper.test.ts` | Clipboard write helper |
+| `directoryUtils.test.ts` | Directory traversal |
+| `extension.test.ts` | Extension activate/deactivate |
+| `fileHelpers.test.ts` | Core file operations |
+| `fileUtils.test.ts` | File utility helpers |
+| `ignoreHelper.test.ts` | Gitignore filter logic |
+| `messageUtils.test.ts` | Error/info message wrappers |
+| `pathUtils.test.ts` | Path resolution helpers |
+| `structureFormatter.test.ts` | Root folder header formatting |
 
 ---
 
@@ -112,6 +128,7 @@ npm run test:failed  # Re-run only previously failing tests
 | `showCopyRootFolderStructureAndContent` | boolean | `true` | Enable copy root folder structure + content |
 | `showCopyFile` | boolean | `true` | Enable copy file/folder |
 | `showPasteFile` | boolean | `true` | Enable paste file/folder |
+| `showCopyFileContents` | boolean | `true` | Enable copying file contents only |
 | `showInClipsterSubmenu` | boolean | `true` | Show commands in submenu vs. root context menu |
 | `additionalIgnores` | array | `[]` | Extra glob patterns to ignore when scanning |
 | `maxRootFiles` | integer | `10` | Max files for root-folder copy-with-content |
@@ -136,6 +153,7 @@ It uses the [`ignore`](https://www.npmjs.com/package/ignore) npm package to appl
 | `ignore` | gitignore-style file filtering |
 | `picomatch` | Glob matching |
 | `webpack` + `ts-loader` | Build/transpile |
+| `copy-webpack-plugin` | Copy `resources/` assets into `dist/` during build |
 | `ts-jest` | Jest TypeScript transform |
 | `@types/jest`, `@types/node`, `@types/vscode` | TypeScript type definitions |
 | `jest` | Unit testing |
@@ -146,5 +164,5 @@ It uses the [`ignore`](https://www.npmjs.com/package/ignore) npm package to appl
 
 ## Known Issues / Gotchas
 
-1. **Tests disabled**: Most test files carry a `.jsREM` suffix, excluding them from Jest. Only `logger.test.ts` is active. Restoring tests requires renaming files back to `.test.ts` and fixing any broken imports.
-2. **`clipster.showSystemCopyPaste` config key**: `extension.ts` checks `config.get("clipster.showSystemCopyPaste", true)` but this setting is not declared in `package.json`'s `contributes.configuration` — it always evaluates to the default `true`.
+1. **`showCopyFileContents` not wired to a command**: The setting is declared in `package.json` but no command in `extension.ts` reads it via `registerConditionalCommand`. It has no effect.
+2. **Context menu groups**: Commands are grouped in the `clipsterMenu` submenu by group strings (`1_create`, `2_copy`, `3_copyRoot`, `4_file`). The `copyFile` and `pasteFile` entries use `when` clauses to show only for files/folders respectively.
