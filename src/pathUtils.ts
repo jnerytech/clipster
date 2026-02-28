@@ -29,28 +29,48 @@ export const getBaseDirectory = (uri: vscode.Uri): string | null => {
  * Resolves where to create a new file or folder from clipboard text.
  *
  * Rules:
- *  - Absolute path  → use as-is.
+ *  - Absolute path  → validate it is within the workspace, then use.
  *  - Contains a directory separator (e.g. "src/foo/bar.ts") → resolve from
  *    workspace root so users can paste paths copied from other tools.
  *  - Bare name (e.g. "index.ts") → resolve from the right-clicked folder
  *    (baseDir), which is the intuitive behaviour.
+ *
+ * VULN-1 fix: after resolving, we verify the resulting path stays within the
+ * workspace (or baseDir when no workspace is open).  Without this check a
+ * crafted clipboard value like "../../etc/passwd" or an absolute path such as
+ * "/etc/shadow" could create or overwrite files outside the workspace.
  */
 export const resolveTargetPath = (clipboardContent: string, baseDir: string): string | null => {
+  const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri?.fsPath;
+  let resolved: string;
+
   if (path.isAbsolute(clipboardContent)) {
-    return path.normalize(clipboardContent);
-  }
-
-  const containsSeparator = clipboardContent.includes("/") || clipboardContent.includes("\\");
-
-  if (containsSeparator) {
-    const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri?.fsPath;
+    resolved = path.normalize(clipboardContent);
+  } else if (clipboardContent.includes("/") || clipboardContent.includes("\\")) {
     if (!workspaceRoot) {
       showErrorMessage("No workspace found. Unable to determine relative path.");
       return null;
     }
-    return path.normalize(path.join(workspaceRoot, clipboardContent));
+    resolved = path.normalize(path.join(workspaceRoot, clipboardContent));
+  } else {
+    // Bare filename: create next to the right-clicked item
+    resolved = path.normalize(path.join(baseDir, clipboardContent));
   }
 
-  // Bare filename: create next to the right-clicked item
-  return path.normalize(path.join(baseDir, clipboardContent));
+  // ── Confinement check ────────────────────────────────────────────────────────
+  // The resolved path must be within the workspace root (or baseDir when there
+  // is no open workspace).  We normalise both paths and add a trailing separator
+  // so that a workspace at "/a/b" does not accidentally allow "/a/bc".
+  const allowedRoot = workspaceRoot ?? baseDir;
+  const resolvedNorm = resolved.endsWith(path.sep) ? resolved : resolved + path.sep;
+  const allowedNorm = allowedRoot.endsWith(path.sep) ? allowedRoot : allowedRoot + path.sep;
+
+  if (!resolvedNorm.startsWith(allowedNorm) && resolved !== allowedRoot) {
+    showErrorMessage(
+      `Blocked: resolved path escapes the workspace. Only paths within the workspace are allowed.`
+    );
+    return null;
+  }
+
+  return resolved;
 };

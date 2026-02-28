@@ -71,9 +71,16 @@ describe("pathUtils", () => {
   });
 
   describe("resolveTargetPath", () => {
-    it("returns an absolute path as-is (normalised)", () => {
+    // VULN-1 fix: absolute paths outside the workspace must be blocked
+    it("blocks absolute paths that escape the workspace", () => {
       const result = resolveTargetPath("/absolute/path/file.ts", "/base/dir");
-      expect(result).toBe(path.normalize("/absolute/path/file.ts"));
+      expect(result).toBeNull();
+      expect(vscode.window.showErrorMessage).toHaveBeenCalled();
+    });
+
+    it("allows absolute paths within the workspace", () => {
+      const result = resolveTargetPath("/mock/workspace/src/file.ts", "/base/dir");
+      expect(result).toBe(path.normalize("/mock/workspace/src/file.ts"));
     });
 
     it("resolves a path containing separator from workspace root", () => {
@@ -81,9 +88,11 @@ describe("pathUtils", () => {
       expect(result).toBe(path.normalize("/mock/workspace/src/file.ts"));
     });
 
-    it("resolves a bare filename from baseDir", () => {
-      const result = resolveTargetPath("file.ts", "/base/dir");
-      expect(result).toBe(path.normalize("/base/dir/file.ts"));
+    it("resolves a bare filename from baseDir within the workspace", () => {
+      // baseDir must be inside the workspace; in real usage this comes from
+      // getBaseDirectory() which always returns a workspace path.
+      const result = resolveTargetPath("file.ts", "/mock/workspace/src");
+      expect(result).toBe(path.normalize("/mock/workspace/src/file.ts"));
     });
 
     it("returns null when no workspace and path contains separator", () => {
@@ -99,6 +108,13 @@ describe("pathUtils", () => {
     it("resolves backslash-separated path from workspace root", () => {
       const result = resolveTargetPath("src\\file.ts", "/base/dir");
       expect(result).toBe(path.normalize("/mock/workspace/src\\file.ts"));
+    });
+
+    // VULN-1 fix: path traversal via relative sequences must be blocked
+    it("blocks path traversal via relative separator path", () => {
+      const result = resolveTargetPath("../../etc/passwd", "/base/dir");
+      expect(result).toBeNull();
+      expect(vscode.window.showErrorMessage).toHaveBeenCalled();
     });
   });
 });

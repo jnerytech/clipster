@@ -78,19 +78,35 @@ describe("fileUtils", () => {
     it("shows error when clipboard content is not a valid file path", async () => {
       (vscode.env.clipboard.readText as jest.Mock).mockResolvedValue("/nonexistent/path.ts");
       mockFs.existsSync.mockReturnValue(false);
-      const targetUri = { fsPath: "/workspace/dest" } as vscode.Uri;
+      const targetUri = { fsPath: "/mock/workspace/dest" } as vscode.Uri;
       await pasteFileFromClipboard(targetUri);
       expect(vscode.window.showErrorMessage).toHaveBeenCalled();
     });
 
+    // VULN-3 fix: source path must be within the workspace
+    it("blocks paste when source is outside the workspace", async () => {
+      const src = "/outside/workspace/secret.ts";
+      (vscode.env.clipboard.readText as jest.Mock).mockResolvedValue(src);
+      mockFs.existsSync.mockReturnValue(true); // source "exists"
+      const targetUri = { fsPath: "/mock/workspace/dest" } as vscode.Uri;
+      await pasteFileFromClipboard(targetUri);
+      expect(vscode.window.showErrorMessage).toHaveBeenCalled();
+      expect(mockFs.copyFileSync).not.toHaveBeenCalled();
+    });
+
     it("copies the file to the target directory", async () => {
-      const src = "/workspace/src/file.ts";
-      const dest = "/workspace/dest";
+      // VULN-3 fix: source must be within /mock/workspace (default mock workspace)
+      const src = "/mock/workspace/src/file.ts";
+      const dest = "/mock/workspace/dest";
       (vscode.env.clipboard.readText as jest.Mock).mockResolvedValue(src);
       mockFs.existsSync.mockImplementation((p) => {
         // source exists; destination does not yet
         return String(p) === src;
       });
+      mockFs.statSync.mockReturnValue({
+        isFile: () => true,
+        isDirectory: () => false,
+      } as unknown as fs.Stats);
       mockFs.copyFileSync.mockReturnValue(undefined);
       const targetUri = { fsPath: dest } as vscode.Uri;
       await pasteFileFromClipboard(targetUri);
@@ -99,8 +115,9 @@ describe("fileUtils", () => {
     });
 
     it("shows warning when destination file already exists", async () => {
-      const src = "/workspace/src/file.ts";
-      const dest = "/workspace/dest";
+      // VULN-3 fix: source must be within /mock/workspace
+      const src = "/mock/workspace/src/file.ts";
+      const dest = "/mock/workspace/dest";
       (vscode.env.clipboard.readText as jest.Mock).mockResolvedValue(src);
       mockFs.existsSync.mockReturnValue(true); // both source and dest "exist"
       const targetUri = { fsPath: dest } as vscode.Uri;
@@ -110,9 +127,27 @@ describe("fileUtils", () => {
 
     it("shows error when clipboard read throws", async () => {
       (vscode.env.clipboard.readText as jest.Mock).mockRejectedValue(new Error("clipboard error"));
-      const targetUri = { fsPath: "/workspace/dest" } as vscode.Uri;
+      const targetUri = { fsPath: "/mock/workspace/dest" } as vscode.Uri;
       await pasteFileFromClipboard(targetUri);
       expect(vscode.window.showErrorMessage).toHaveBeenCalled();
+    });
+
+    // BUG-7 fix: pasting a folder should copy the entire directory tree
+    it("copies a directory to the target when source is a folder", async () => {
+      const src = "/mock/workspace/src/myFolder";
+      const dest = "/mock/workspace/dest";
+      (vscode.env.clipboard.readText as jest.Mock).mockResolvedValue(src);
+      mockFs.existsSync.mockImplementation((p) => String(p) === src);
+      mockFs.statSync.mockReturnValue({
+        isFile: () => false,
+        isDirectory: () => true,
+      } as unknown as fs.Stats);
+      (mockFs.readdirSync as jest.Mock).mockReturnValue([]);
+      mockFs.mkdirSync.mockReturnValue(undefined);
+      const targetUri = { fsPath: dest } as vscode.Uri;
+      await pasteFileFromClipboard(targetUri);
+      expect(mockFs.mkdirSync).toHaveBeenCalledWith(`${dest}/myFolder`, { recursive: true });
+      expect(vscode.window.showInformationMessage).toHaveBeenCalledWith("Folder pasted: myFolder");
     });
   });
 });

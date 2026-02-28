@@ -74,6 +74,15 @@ describe("fileHelpers", () => {
     it("returns true for a filename with regular characters", () => {
       expect(isValidPath("my-component_v2.tsx")).toBe(true);
     });
+
+    // VULN-2 fix: path traversal via ".." must be rejected regardless of basename
+    it("returns false for a path containing '..' traversal sequences", () => {
+      expect(isValidPath("../../etc/passwd")).toBe(false);
+    });
+
+    it("returns false for a simple '..' segment", () => {
+      expect(isValidPath("../secret.ts")).toBe(false);
+    });
   });
 
   // ─── copyRootFolderPath ───────────────────────────────────────────────────────
@@ -257,7 +266,16 @@ describe("fileHelpers", () => {
   // ─── copyFileContentWithPath ──────────────────────────────────────────────────
 
   describe("copyFileContentWithPath", () => {
+    // BUG-6 fix: function now calls statSync to enforce size limits, so tests
+    // must provide a statSync mock returning a plausible file Stats object.
+    const fileStats = {
+      isFile: () => true,
+      isDirectory: () => false,
+      size: 100, // well under the default 500 KB limit
+    } as unknown as fs.Stats;
+
     it("copies single file content with path to clipboard", async () => {
+      mockFs.statSync.mockReturnValue(fileStats);
       (mockFs.readFileSync as jest.Mock).mockReturnValue("file content");
       const uris = [{ fsPath: "/workspace/src/index.ts" } as vscode.Uri];
       await copyFileContentWithPath(uris);
@@ -267,6 +285,7 @@ describe("fileHelpers", () => {
     });
 
     it("shows information message with file count", async () => {
+      mockFs.statSync.mockReturnValue(fileStats);
       (mockFs.readFileSync as jest.Mock).mockReturnValue("content");
       const uris = [{ fsPath: "/a.ts" } as vscode.Uri, { fsPath: "/b.ts" } as vscode.Uri];
       await copyFileContentWithPath(uris);
@@ -276,11 +295,30 @@ describe("fileHelpers", () => {
     });
 
     it("shows error when clipboard write fails", async () => {
+      mockFs.statSync.mockReturnValue(fileStats);
       (mockFs.readFileSync as jest.Mock).mockReturnValue("content");
       (vscode.env.clipboard.writeText as jest.Mock).mockRejectedValue(new Error("clipboard error"));
       const uris = [{ fsPath: "/a.ts" } as vscode.Uri];
       await copyFileContentWithPath(uris);
       expect(vscode.window.showErrorMessage).toHaveBeenCalled();
+    });
+
+    // BUG-6 fix: files exceeding the size limit must be truncated with a warning
+    it("shows warning and truncates when total size exceeds limit", async () => {
+      // Each file is 400 KB; two files exceed the 500 KB default limit
+      mockFs.statSync.mockReturnValue({
+        isFile: () => true,
+        isDirectory: () => false,
+        size: 400 * 1024,
+      } as unknown as fs.Stats);
+      (mockFs.readFileSync as jest.Mock).mockReturnValue("x");
+      const uris = [{ fsPath: "/a.ts" } as vscode.Uri, { fsPath: "/b.ts" } as vscode.Uri];
+      await copyFileContentWithPath(uris);
+      expect(vscode.window.showWarningMessage).toHaveBeenCalled();
+      // Only the first file (400 KB) should have been written
+      const written = (vscode.env.clipboard.writeText as jest.Mock).mock.calls[0][0] as string;
+      expect(written).toContain("/a.ts");
+      expect(written).not.toContain("/b.ts");
     });
   });
 

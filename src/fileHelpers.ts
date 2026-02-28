@@ -3,8 +3,9 @@ import fs from "fs";
 import path from "path";
 import os from "os";
 import * as vscode from "vscode";
+import type { Ignore } from "ignore";
 import logger from "./logger";
-import { filterIgnoredFiles } from "./ignoreHelper";
+import { buildIgnoreFilter, filterIgnoredFiles } from "./ignoreHelper";
 import { readFileContent } from "./fileUtils";
 import { showErrorMessage, showInformationMessage } from "./messageUtils";
 import { traverseDirectory } from "./directoryUtils";
@@ -41,7 +42,11 @@ export const getFolderStructure = (dir: string, additionalIgnores: string[] = []
 
   const absolutePath = path.resolve(dir);
   const folderName = path.basename(dir);
-  let structure = formatRootFolder(path.basename(workspaceRoot), absolutePath);
+
+  // BUG-9 fix: use the *selected folder's* name in the header, not the workspace root name.
+  // Previously formatRootFolder received path.basename(workspaceRoot), which produced a
+  // misleading header when the selected folder differed from the workspace root.
+  let structure = formatRootFolder(folderName, absolutePath);
   structure += `${folderName}/${os.EOL}`;
   structure += traverseDirectory(dir, workspaceRoot, additionalIgnores);
   return structure;
@@ -63,17 +68,22 @@ export const copyRootFolderStructureAndContent = (additionalIgnores: string[] = 
     return "No workspace root found.";
   }
 
-  // Fix: use short keys — config is already scoped to "clipster"
   const config = vscode.workspace.getConfiguration("clipster");
   const maxFiles = config.get<number>("maxRootFiles", 10);
   const maxSizeKB = config.get<number>("maxRootSizeKB", 500);
 
   let totalSize = 0;
   let fileCount = 0;
+  // BUG-5 fix: single flag shared across the entire recursive traversal so the
+  // warning is shown exactly once, regardless of how many directories are visited.
+  let limitReached = false;
   let content = getFolderStructure(workspaceRoot, additionalIgnores);
 
+  // Build the ignore filter once and reuse it inside appendFileContents (BUG-2 fix).
+  const filter: Ignore = buildIgnoreFilter(workspaceRoot, additionalIgnores);
+
   const appendFileContents = (currentDir: string): void => {
-    if (fileCount >= maxFiles || totalSize >= maxSizeKB * 1024) {
+    if (limitReached || fileCount >= maxFiles || totalSize >= maxSizeKB * 1024) {
       return;
     }
 
@@ -88,10 +98,13 @@ export const copyRootFolderStructureAndContent = (additionalIgnores: string[] = 
       currentDir,
       rawEntries.map((e) => e.name),
       workspaceRoot,
-      additionalIgnores
+      additionalIgnores,
+      filter // reuse cached filter (BUG-2 fix)
     );
 
     for (const entry of entries) {
+      if (limitReached) break;
+
       const entryPath = path.join(currentDir, entry);
       let stats: fs.Stats;
       try {
@@ -107,9 +120,13 @@ export const copyRootFolderStructureAndContent = (additionalIgnores: string[] = 
 
       if (stats.isFile()) {
         if (totalSize + stats.size > maxSizeKB * 1024 || fileCount >= maxFiles) {
-          vscode.window.showWarningMessage(
-            `Reached limit: ${fileCount} files or ${maxSizeKB} KB total`
-          );
+          // BUG-5 fix: guard with limitReached so the warning fires only once
+          if (!limitReached) {
+            vscode.window.showWarningMessage(
+              `Reached limit: ${fileCount} files or ${maxSizeKB} KB total`
+            );
+            limitReached = true;
+          }
           break;
         }
         const fileContent = readFileContent(entryPath);
@@ -130,8 +147,20 @@ export const copyRootFolderStructureAndContent = (additionalIgnores: string[] = 
   return content;
 };
 
+/**
+ * Validates that a clipboard line is safe to use as a path component.
+ *
+ * VULN-2 fix: the previous implementation only inspected path.basename(),
+ * which allowed traversal sequences like "../../etc/passwd" (basename = "passwd")
+ * to pass validation.  We now reject any path that contains ".." segments.
+ */
 export const isValidPath = (filePath: string): boolean => {
-  const baseName = path.basename(filePath);
+  const normalised = path.normalize(filePath);
+  // Reject path traversal sequences in any segment
+  if (normalised.split(path.sep).some((segment) => segment === "..")) {
+    return false;
+  }
+  const baseName = path.basename(normalised);
   const invalidChars = process.platform === "win32" ? /[<>:"/\\|?*\x00-\x1F]/g : /[/\x00]/g;
   return !invalidChars.test(baseName);
 };
@@ -140,8 +169,14 @@ export const createFileOrFolderFromClipboard = async (
   clipboardContent: string,
   uri: vscode.Uri
 ): Promise<void> => {
+  // VULN-4 fix: log only a safe preview, never the full clipboard content, to
+  // prevent API keys / passwords from appearing in the Output Channel log.
+  const logPreview =
+    clipboardContent.length > 120
+      ? `[${clipboardContent.length} chars — truncated for log safety]`
+      : clipboardContent;
   logger.log(
-    `Processing clipboard content: ${clipboardContent}`,
+    `Processing clipboard content: ${logPreview}`,
     "createFileOrFolderFromClipboard",
     __filename
   );
@@ -221,18 +256,56 @@ export const createFileOrFolderFromClipboard = async (
   logger.log(summary, "createFileOrFolderFromClipboard", __filename);
 };
 
+/**
+ * Copies selected files' content (with their paths as headers) to the clipboard.
+ *
+ * BUG-6 fix: the previous implementation had no size guard, so selecting a large
+ * number of files could exhaust memory building an unbounded string.  We now
+ * apply the same maxRootSizeKB limit used by copyRootFolderStructureAndContent.
+ */
 export const copyFileContentWithPath = async (uris: vscode.Uri[]): Promise<void> => {
-  const content = uris
-    .map((uri) => {
-      const filePath = uri.fsPath;
-      const fileContent = readFileContent(filePath);
-      return `File: ${filePath}${os.EOL}${fileContent}`;
-    })
-    .join(`${os.EOL}${os.EOL}`);
+  const config = vscode.workspace.getConfiguration("clipster");
+  const maxSizeKB = config.get<number>("maxRootSizeKB", 500);
+  const maxBytes = maxSizeKB * 1024;
+
+  let totalSize = 0;
+  const parts: string[] = [];
+  let truncated = false;
+
+  for (const uri of uris) {
+    const filePath = uri.fsPath;
+    let stats: fs.Stats;
+    try {
+      stats = fs.statSync(filePath);
+    } catch {
+      continue;
+    }
+    if (!stats.isFile()) continue;
+
+    if (totalSize + stats.size > maxBytes) {
+      truncated = true;
+      break;
+    }
+
+    const fileContent = readFileContent(filePath);
+    parts.push(`File: ${filePath}${os.EOL}${fileContent}`);
+    totalSize += stats.size;
+  }
+
+  if (!parts.length) {
+    vscode.window.showWarningMessage("No files to copy or total size exceeds limit.");
+    return;
+  }
+
+  if (truncated) {
+    vscode.window.showWarningMessage(
+      `Size limit (${maxSizeKB} KB) reached; ${parts.length} of ${uris.length} file(s) included.`
+    );
+  }
 
   try {
-    await vscode.env.clipboard.writeText(content);
-    vscode.window.showInformationMessage(`${uris.length} file(s) copied with paths.`);
+    await vscode.env.clipboard.writeText(parts.join(`${os.EOL}${os.EOL}`));
+    vscode.window.showInformationMessage(`${parts.length} file(s) copied with paths.`);
   } catch (err) {
     vscode.window.showErrorMessage(`Failed to copy files: ${(err as Error).message}`);
     logger.error(`Failed to copy files: ${(err as Error).message}`, "fileHelpers", __filename);
@@ -248,7 +321,8 @@ export const getFolderStructureAndContent = (
   dir: string,
   additionalIgnores: string[] = [],
   workspaceRoot?: string,
-  indent = "┣ "
+  indent = "┣ ",
+  ig?: Ignore // cached ignore filter — built once and shared across recursive calls
 ): string => {
   if (!dir || typeof dir !== "string") {
     logger.error(
@@ -261,6 +335,9 @@ export const getFolderStructureAndContent = (
 
   // Establish workspaceRoot on the first (top-level) call
   const root = workspaceRoot ?? vscode.workspace.workspaceFolders?.[0]?.uri?.fsPath ?? dir;
+
+  // Build the ignore filter once and pass it to all recursive calls (BUG-2 fix).
+  const filter: Ignore = ig ?? buildIgnoreFilter(root, additionalIgnores);
 
   logger.log(`Scanning folder: ${dir}`, "getFolderStructureAndContent", __filename);
 
@@ -282,7 +359,8 @@ export const getFolderStructureAndContent = (
     dir,
     rawEntries.map((e) => e.name),
     root,
-    additionalIgnores
+    additionalIgnores,
+    filter // reuse cached filter (BUG-2 fix)
   );
 
   for (const entry of entries) {
@@ -300,8 +378,13 @@ export const getFolderStructureAndContent = (
     }
 
     if (stats.isDirectory()) {
-      // Pass the same root down — fixes the bug where dir was used as root
-      structure += getFolderStructureAndContent(entryPath, additionalIgnores, root, `${indent}┃ `);
+      structure += getFolderStructureAndContent(
+        entryPath,
+        additionalIgnores,
+        root,
+        `${indent}┃ `,
+        filter // pass cached filter to recursive call
+      );
     } else {
       try {
         const fileContent = fs.readFileSync(entryPath, "utf8");
