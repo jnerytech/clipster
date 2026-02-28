@@ -4,7 +4,7 @@
 
 **Clipster** is a VS Code extension (publisher: `conzeon`) that lets users copy file paths, folder structures, and file contents from the VS Code Explorer to the clipboard, as well as create files/folders from clipboard content and copy/paste files between folders.
 
-- **Version**: 1.2.106 (see `package.json`)
+- **Version**: see `package.json` (authoritative; any `.version` file is legacy/stale and not used)
 - **VS Code engine**: `^1.93.0`
 - **Entry point**: `src/extension.ts` → compiled to `dist/extension.js`
 - **Repository**: https://github.com/TheJesper/clipster
@@ -129,7 +129,7 @@ All test files in `src/test/` are active `.test.ts` files. Note that `jest` must
 | `showCopyFile` | boolean | `true` | Enable copy file/folder |
 | `showPasteFile` | boolean | `true` | Enable paste file/folder |
 | `showCopyFileContents` | boolean | `true` | Enable copying file contents only |
-| `showInClipsterSubmenu` | boolean | `true` | Show commands in submenu vs. root context menu |
+| `showInClipsterSubmenu` | boolean | `true` | Declared in `package.json` but has no effect – not read by `extension.ts` or referenced in menu `when` clauses (see Known Issues) |
 | `additionalIgnores` | array | `[]` | Extra glob patterns to ignore when scanning |
 | `maxRootFiles` | integer | `10` | Max files for root-folder copy-with-content |
 | `maxRootSizeKB` | integer | `500` | Max total KB for root-folder copy-with-content |
@@ -165,4 +165,5 @@ It uses the [`ignore`](https://www.npmjs.com/package/ignore) npm package to appl
 ## Known Issues / Gotchas
 
 1. **`showCopyFileContents` not wired to a command**: The setting is declared in `package.json` but no command in `extension.ts` reads it via `registerConditionalCommand`. It has no effect.
-2. **Context menu groups**: Commands are grouped in the `clipsterMenu` submenu by group strings (`1_create`, `2_copy`, `3_copyRoot`, `4_file`). The `copyFile` and `pasteFile` entries use `when` clauses to show only for files/folders respectively.
+2. **`showInClipsterSubmenu` not wired up**: The setting is declared in `package.json` but `extension.ts` does not read it and there are no `when` clauses in the menu contributions that reference it. It has no effect on whether commands appear in a submenu or the root context menu.
+3. **Context menu groups**: Commands are grouped in the `clipsterMenu` submenu by group strings (`1_create`, `2_copy`, `3_copyRoot`, `4_file`). The `copyFile` and `pasteFile` entries use `when` clauses to show only for files/folders respectively.
