@@ -42,7 +42,8 @@ export const filterIgnoredFiles = (
   files: string[],
   workspaceRoot: string,
   additionalIgnores: string[] = [],
-  ig?: Ignore // optional pre-built filter — skips re-reading .gitignore on every call
+  ig?: Ignore, // optional pre-built filter — skips re-reading .gitignore on every call
+  direntMap?: Map<string, boolean> // optional: maps entry name -> isDirectory, avoids extra statSync
 ): string[] => {
   if (!Array.isArray(files)) {
     logger.error(
@@ -76,10 +77,14 @@ export const filterIgnoredFiles = (
       relative = path.posix.normalize(relative.replace(/\\/g, "/"));
 
       let isDir = false;
-      try {
-        isDir = fs.statSync(absolute).isDirectory();
-      } catch {
-        // skip inaccessible entries
+      if (direntMap) {
+        isDir = direntMap.get(file) ?? false;
+      } else {
+        try {
+          isDir = fs.statSync(absolute).isDirectory();
+        } catch {
+          // skip inaccessible entries
+        }
       }
       if (isDir && !relative.endsWith("/")) {
         relative += "/";

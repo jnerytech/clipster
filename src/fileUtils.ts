@@ -47,11 +47,16 @@ export const copyFileToClipboard = async (uri: vscode.Uri): Promise<void> => {
 
 /**
  * Recursively copies a directory tree from `src` to `dest`.
+ * Symlinks are intentionally skipped to prevent following them to paths outside
+ * the workspace (security hardening).
  * Used by pasteFileFromClipboard to support folder paste (BUG-7 fix).
  */
 const copyDirectorySync = (src: string, dest: string): void => {
   fs.mkdirSync(dest, { recursive: true });
   for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
+    if (entry.isSymbolicLink()) {
+      continue; // skip symlinks to avoid following them outside the workspace
+    }
     const srcPath = path.join(src, entry.name);
     const destPath = path.join(dest, entry.name);
     if (entry.isDirectory()) {
@@ -74,17 +79,31 @@ export const pasteFileFromClipboard = async (targetUri: vscode.Uri): Promise<voi
 
     // VULN-3 fix: the source must reside within the current workspace to prevent
     // an attacker (or malicious clipboard content) from copying arbitrary files
-    // from anywhere on disk into the workspace.
+    // from anywhere on disk into the workspace. We use fs.realpathSync so that
+    // symlink-based escapes are detected correctly on all platforms.
     const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri?.fsPath;
     if (workspaceRoot) {
-      const normSrc = path.normalize(clipboardContent);
-      const normRoot = path.normalize(workspaceRoot);
-      const srcWithSep = normSrc.endsWith(path.sep) ? normSrc : normSrc + path.sep;
-      const rootWithSep = normRoot.endsWith(path.sep) ? normRoot : normRoot + path.sep;
-      if (!srcWithSep.startsWith(rootWithSep) && normSrc !== normRoot) {
-        showErrorMessage("Paste blocked: source path is outside the current workspace.");
+      try {
+        const srcReal = fs.realpathSync(clipboardContent);
+        const rootReal = fs.realpathSync(workspaceRoot);
+        const relative = path.relative(rootReal, srcReal);
+        if (
+          path.isAbsolute(relative) ||
+          relative === ".." ||
+          relative.startsWith(".." + path.sep)
+        ) {
+          showErrorMessage("Paste blocked: source path is outside the current workspace.");
+          logger.error(
+            `Paste blocked: "${clipboardContent}" is outside workspace "${workspaceRoot}"`,
+            "fileUtils",
+            __filename
+          );
+          return;
+        }
+      } catch (err) {
+        showErrorMessage(`Paste blocked: failed to resolve source path: ${(err as Error).message}`);
         logger.error(
-          `Paste blocked: "${clipboardContent}" is outside workspace "${workspaceRoot}"`,
+          `Paste blocked: could not resolve "${clipboardContent}": ${(err as Error).message}`,
           "fileUtils",
           __filename
         );

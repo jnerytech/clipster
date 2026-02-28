@@ -18,7 +18,7 @@ const mockFs = jest.mocked(fs);
 
 /** Minimal Dirent factory. */
 function dirent(name: string): fs.Dirent {
-  return { name } as unknown as fs.Dirent;
+  return { name, isDirectory: () => false, isSymbolicLink: () => false } as unknown as fs.Dirent;
 }
 
 describe("fileHelpers", () => {
@@ -29,6 +29,8 @@ describe("fileHelpers", () => {
     ).workspaceFolders = [{ uri: { fsPath: "/mock/workspace" } }];
     mockFs.existsSync.mockReturnValue(false); // no .gitignore by default
     (vscode.env.clipboard.writeText as jest.Mock).mockResolvedValue(undefined);
+    // resolveTargetPath uses realpathSync for confinement checks; behave as identity in tests
+    (mockFs.realpathSync as unknown as jest.Mock).mockImplementation((p: string) => p);
   });
 
   // ─── isFolder ────────────────────────────────────────────────────────────────

@@ -58,17 +58,34 @@ export const resolveTargetPath = (clipboardContent: string, baseDir: string): st
   }
 
   // ── Confinement check ────────────────────────────────────────────────────────
-  // The resolved path must be within the workspace root (or baseDir when there
-  // is no open workspace).  We normalise both paths and add a trailing separator
-  // so that a workspace at "/a/b" does not accidentally allow "/a/bc".
+  // We compare *real* filesystem paths using fs.realpathSync + path.relative so
+  // that symlinks and case-insensitive filesystems (e.g. Windows) are handled
+  // correctly. The target file/folder may not exist yet, so we resolve the real
+  // path of its parent directory and then append the final segment.
   const allowedRoot = workspaceRoot ?? baseDir;
-  const resolvedNorm = resolved.endsWith(path.sep) ? resolved : resolved + path.sep;
-  const allowedNorm = allowedRoot.endsWith(path.sep) ? allowedRoot : allowedRoot + path.sep;
 
-  if (!resolvedNorm.startsWith(allowedNorm) && resolved !== allowedRoot) {
-    showErrorMessage(
-      `Blocked: resolved path escapes the workspace. Only paths within the workspace are allowed.`
-    );
+  try {
+    const allowedRootReal = fs.realpathSync(allowedRoot);
+
+    const resolvedDir = path.dirname(resolved);
+    const resolvedDirReal = fs.realpathSync(resolvedDir);
+    const resolvedReal = path.join(resolvedDirReal, path.basename(resolved));
+
+    const relative = path.relative(allowedRootReal, resolvedReal);
+
+    if (
+      !relative ||
+      path.isAbsolute(relative) ||
+      relative === ".." ||
+      relative.startsWith(".." + path.sep)
+    ) {
+      showErrorMessage(
+        `Blocked: resolved path escapes the workspace. Only paths within the workspace are allowed.`
+      );
+      return null;
+    }
+  } catch (err) {
+    showErrorMessage(`Failed to validate target path confinement: ${(err as Error).message}`);
     return null;
   }
 

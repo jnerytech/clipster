@@ -28,12 +28,14 @@ export const traverseDirectory = (
   }
 
   // Filter first, then work with the filtered name list
+  const direntMap = new Map(rawEntries.map((e) => [e.name, e.isDirectory()]));
   const filteredNames = filterIgnoredFiles(
     dir,
     rawEntries.map((e) => e.name),
     workspaceRoot,
     additionalIgnores,
-    filter // pass the cached filter — avoids another .gitignore read inside
+    filter, // pass the cached filter — avoids another .gitignore read inside
+    direntMap // pass dirent type info — avoids a statSync per entry in filterIgnoredFiles
   );
 
   // Separate filtered names into directories and files using safe stat
