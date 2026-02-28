@@ -50,46 +50,38 @@ describe("extension", () => {
 
     it("pushes disposables onto context.subscriptions", () => {
       activate(mockContext);
-      expect(
-        (mockContext.subscriptions as { dispose(): void }[]).length
-      ).toBeGreaterThan(0);
+      expect((mockContext.subscriptions as { dispose(): void }[]).length).toBeGreaterThan(0);
     });
 
     it("re-registers commands when clipster configuration changes", () => {
       activate(mockContext);
 
-      const firstCallCount = (vscode.commands.registerCommand as jest.Mock)
-        .mock.calls.length;
+      const firstCallCount = (vscode.commands.registerCommand as jest.Mock).mock.calls.length;
 
       // Retrieve the onDidChangeConfiguration callback and invoke it
-      const configCallback = (
-        vscode.workspace.onDidChangeConfiguration as jest.Mock
-      ).mock.calls[0][0] as (e: { affectsConfiguration: (s: string) => boolean }) => void;
+      const configCallback = (vscode.workspace.onDidChangeConfiguration as jest.Mock).mock
+        .calls[0][0] as (e: { affectsConfiguration: (s: string) => boolean }) => void;
 
       configCallback({
         affectsConfiguration: (key: string) => key === "clipster",
       });
 
-      expect(
-        (vscode.commands.registerCommand as jest.Mock).mock.calls.length
-      ).toBeGreaterThan(firstCallCount);
+      expect((vscode.commands.registerCommand as jest.Mock).mock.calls.length).toBeGreaterThan(
+        firstCallCount
+      );
     });
 
     it("does not re-register when an unrelated configuration changes", () => {
       activate(mockContext);
 
-      const firstCallCount = (vscode.commands.registerCommand as jest.Mock)
-        .mock.calls.length;
+      const firstCallCount = (vscode.commands.registerCommand as jest.Mock).mock.calls.length;
 
-      const configCallback = (
-        vscode.workspace.onDidChangeConfiguration as jest.Mock
-      ).mock.calls[0][0] as (e: { affectsConfiguration: (s: string) => boolean }) => void;
+      const configCallback = (vscode.workspace.onDidChangeConfiguration as jest.Mock).mock
+        .calls[0][0] as (e: { affectsConfiguration: (s: string) => boolean }) => void;
 
       configCallback({ affectsConfiguration: () => false });
 
-      expect(
-        (vscode.commands.registerCommand as jest.Mock).mock.calls.length
-      ).toBe(firstCallCount);
+      expect((vscode.commands.registerCommand as jest.Mock).mock.calls.length).toBe(firstCallCount);
     });
   });
 
@@ -117,7 +109,10 @@ describe("extension", () => {
       isFile.mockReturnValue(false);
 
       // Find the copyFolderStructure command handler
-      const calls = (vscode.commands.registerCommand as jest.Mock).mock.calls as [string, (...args: unknown[]) => unknown][];
+      const calls = (vscode.commands.registerCommand as jest.Mock).mock.calls as [
+        string,
+        (...args: unknown[]) => unknown,
+      ][];
       const entry = calls.find(([cmd]) => cmd === "clipster.copyFolderStructure");
       expect(entry).toBeDefined();
 
@@ -134,7 +129,10 @@ describe("extension", () => {
         copyToClipboard: jest.Mock;
       };
 
-      const calls = (vscode.commands.registerCommand as jest.Mock).mock.calls as [string, (...args: unknown[]) => unknown][];
+      const calls = (vscode.commands.registerCommand as jest.Mock).mock.calls as [
+        string,
+        (...args: unknown[]) => unknown,
+      ][];
       const entry = calls.find(([cmd]) => cmd === "clipster.copyRootFolderPath");
       expect(entry).toBeDefined();
 
@@ -151,10 +149,11 @@ describe("extension", () => {
         copyToClipboard: jest.Mock;
       };
 
-      const calls = (vscode.commands.registerCommand as jest.Mock).mock.calls as [string, (...args: unknown[]) => unknown][];
-      const entry = calls.find(
-        ([cmd]) => cmd === "clipster.copyRootFolderStructure"
-      );
+      const calls = (vscode.commands.registerCommand as jest.Mock).mock.calls as [
+        string,
+        (...args: unknown[]) => unknown,
+      ][];
+      const entry = calls.find(([cmd]) => cmd === "clipster.copyRootFolderStructure");
       expect(entry).toBeDefined();
 
       if (entry) {
@@ -170,10 +169,11 @@ describe("extension", () => {
         copyToClipboard: jest.Mock;
       };
 
-      const calls = (vscode.commands.registerCommand as jest.Mock).mock.calls as [string, (...args: unknown[]) => unknown][];
-      const entry = calls.find(
-        ([cmd]) => cmd === "clipster.copyRootFolderStructureAndContent"
-      );
+      const calls = (vscode.commands.registerCommand as jest.Mock).mock.calls as [
+        string,
+        (...args: unknown[]) => unknown,
+      ][];
+      const entry = calls.find(([cmd]) => cmd === "clipster.copyRootFolderStructureAndContent");
       expect(entry).toBeDefined();
 
       if (entry) {
@@ -193,10 +193,11 @@ describe("extension", () => {
       };
       isFile.mockReturnValue(false);
 
-      const calls = (vscode.commands.registerCommand as jest.Mock).mock.calls as [string, (...args: unknown[]) => unknown][];
-      const entry = calls.find(
-        ([cmd]) => cmd === "clipster.copyFolderStructureAndContent"
-      );
+      const calls = (vscode.commands.registerCommand as jest.Mock).mock.calls as [
+        string,
+        (...args: unknown[]) => unknown,
+      ][];
+      const entry = calls.find(([cmd]) => cmd === "clipster.copyFolderStructureAndContent");
       expect(entry).toBeDefined();
 
       if (entry) {
@@ -212,10 +213,11 @@ describe("extension", () => {
         copyToClipboard: jest.Mock;
       };
 
-      const calls = (vscode.commands.registerCommand as jest.Mock).mock.calls as [string, (...args: unknown[]) => unknown][];
-      const entry = calls.find(
-        ([cmd]) => cmd === "clipster.copyFolderStructureAndContent"
-      );
+      const calls = (vscode.commands.registerCommand as jest.Mock).mock.calls as [
+        string,
+        (...args: unknown[]) => unknown,
+      ][];
+      const entry = calls.find(([cmd]) => cmd === "clipster.copyFolderStructureAndContent");
       expect(entry).toBeDefined();
 
       if (entry) {
@@ -226,19 +228,18 @@ describe("extension", () => {
     });
 
     it("createFileFromClipboard handler creates files from clipboard", async () => {
-      (vscode.env.clipboard.readText as jest.Mock).mockResolvedValue(
-        "newfile.ts"
-      );
+      (vscode.env.clipboard.readText as jest.Mock).mockResolvedValue("newfile.ts");
       activate(mockContext);
 
-      const { createFileOrFolderFromClipboard } = jest.requireMock(
-        "../fileHelpers"
-      ) as { createFileOrFolderFromClipboard: jest.Mock };
+      const { createFileOrFolderFromClipboard } = jest.requireMock("../fileHelpers") as {
+        createFileOrFolderFromClipboard: jest.Mock;
+      };
 
-      const calls = (vscode.commands.registerCommand as jest.Mock).mock.calls as [string, (...args: unknown[]) => unknown][];
-      const entry = calls.find(
-        ([cmd]) => cmd === "clipster.createFileFromClipboard"
-      );
+      const calls = (vscode.commands.registerCommand as jest.Mock).mock.calls as [
+        string,
+        (...args: unknown[]) => unknown,
+      ][];
+      const entry = calls.find(([cmd]) => cmd === "clipster.createFileFromClipboard");
       expect(entry).toBeDefined();
 
       if (entry) {
@@ -251,10 +252,11 @@ describe("extension", () => {
       (vscode.env.clipboard.readText as jest.Mock).mockResolvedValue("  \n  ");
       activate(mockContext);
 
-      const calls = (vscode.commands.registerCommand as jest.Mock).mock.calls as [string, (...args: unknown[]) => unknown][];
-      const entry = calls.find(
-        ([cmd]) => cmd === "clipster.createFileFromClipboard"
-      );
+      const calls = (vscode.commands.registerCommand as jest.Mock).mock.calls as [
+        string,
+        (...args: unknown[]) => unknown,
+      ][];
+      const entry = calls.find(([cmd]) => cmd === "clipster.createFileFromClipboard");
       expect(entry).toBeDefined();
 
       if (entry) {
@@ -266,14 +268,15 @@ describe("extension", () => {
     it("copyFileContentWithHeader handler copies file content", async () => {
       activate(mockContext);
 
-      const { copyFileContentWithPath } = jest.requireMock(
-        "../fileHelpers"
-      ) as { copyFileContentWithPath: jest.Mock };
+      const { copyFileContentWithPath } = jest.requireMock("../fileHelpers") as {
+        copyFileContentWithPath: jest.Mock;
+      };
 
-      const calls = (vscode.commands.registerCommand as jest.Mock).mock.calls as [string, (...args: unknown[]) => unknown][];
-      const entry = calls.find(
-        ([cmd]) => cmd === "clipster.copyFileContentWithHeader"
-      );
+      const calls = (vscode.commands.registerCommand as jest.Mock).mock.calls as [
+        string,
+        (...args: unknown[]) => unknown,
+      ][];
+      const entry = calls.find(([cmd]) => cmd === "clipster.copyFileContentWithHeader");
       expect(entry).toBeDefined();
 
       if (entry) {
@@ -290,7 +293,10 @@ describe("extension", () => {
         copyFileToClipboard: jest.Mock;
       };
 
-      const calls = (vscode.commands.registerCommand as jest.Mock).mock.calls as [string, (...args: unknown[]) => unknown][];
+      const calls = (vscode.commands.registerCommand as jest.Mock).mock.calls as [
+        string,
+        (...args: unknown[]) => unknown,
+      ][];
       const entry = calls.find(([cmd]) => cmd === "clipster.copyFile");
       expect(entry).toBeDefined();
 
@@ -308,7 +314,10 @@ describe("extension", () => {
         pasteFileFromClipboard: jest.Mock;
       };
 
-      const calls = (vscode.commands.registerCommand as jest.Mock).mock.calls as [string, (...args: unknown[]) => unknown][];
+      const calls = (vscode.commands.registerCommand as jest.Mock).mock.calls as [
+        string,
+        (...args: unknown[]) => unknown,
+      ][];
       const entry = calls.find(([cmd]) => cmd === "clipster.pasteFile");
       expect(entry).toBeDefined();
 
@@ -327,7 +336,10 @@ describe("extension", () => {
 
       activate(mockContext);
 
-      const calls = (vscode.commands.registerCommand as jest.Mock).mock.calls as [string, (...args: unknown[]) => unknown][];
+      const calls = (vscode.commands.registerCommand as jest.Mock).mock.calls as [
+        string,
+        (...args: unknown[]) => unknown,
+      ][];
       const entry = calls.find(([cmd]) => cmd === "clipster.copyRootFolderPath");
       expect(entry).toBeDefined();
 

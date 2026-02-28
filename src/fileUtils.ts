@@ -3,11 +3,7 @@ import * as vscode from "vscode";
 import fs from "fs";
 import path from "path";
 import logger from "./logger";
-import {
-  showErrorMessage,
-  showInformationMessage,
-  showWarningMessage,
-} from "./messageUtils";
+import { showErrorMessage, showInformationMessage, showWarningMessage } from "./messageUtils";
 
 export const openFileInEditor = async (filePath: string): Promise<void> => {
   try {
@@ -42,49 +38,28 @@ export const copyFileToClipboard = async (uri: vscode.Uri): Promise<void> => {
     const filePath = uri.fsPath;
     await vscode.env.clipboard.writeText(filePath);
     showInformationMessage(`File copied: ${path.basename(filePath)}`);
-    logger.log(
-      `File copied to clipboard: ${filePath}`,
-      "fileUtils",
-      __filename
-    );
+    logger.log(`File copied to clipboard: ${filePath}`, "fileUtils", __filename);
   } catch (err) {
     showErrorMessage(`Failed to copy file: ${(err as Error).message}`);
-    logger.error(
-      `Failed to copy file: ${(err as Error).message}`,
-      "fileUtils",
-      __filename
-    );
+    logger.error(`Failed to copy file: ${(err as Error).message}`, "fileUtils", __filename);
   }
 };
 
-export const pasteFileFromClipboard = async (
-  targetUri: vscode.Uri
-): Promise<void> => {
+export const pasteFileFromClipboard = async (targetUri: vscode.Uri): Promise<void> => {
   try {
     const clipboardContent = await vscode.env.clipboard.readText();
 
     if (!fs.existsSync(clipboardContent)) {
       showErrorMessage("Clipboard does not contain a valid file path.");
-      logger.error(
-        "Clipboard does not contain a valid file path.",
-        "fileUtils",
-        __filename
-      );
+      logger.error("Clipboard does not contain a valid file path.", "fileUtils", __filename);
       return;
     }
 
-    const targetPath = path.join(
-      targetUri.fsPath,
-      path.basename(clipboardContent)
-    );
+    const targetPath = path.join(targetUri.fsPath, path.basename(clipboardContent));
 
     if (fs.existsSync(targetPath)) {
       showWarningMessage(`File already exists: ${path.basename(targetPath)}`);
-      logger.warn(
-        `File already exists: ${targetPath}`,
-        "fileUtils",
-        __filename
-      );
+      logger.warn(`File already exists: ${targetPath}`, "fileUtils", __filename);
       return;
     }
 
@@ -93,11 +68,7 @@ export const pasteFileFromClipboard = async (
     logger.log(`File pasted to: ${targetPath}`, "fileUtils", __filename);
   } catch (err) {
     showErrorMessage(`Failed to paste file: ${(err as Error).message}`);
-    logger.error(
-      `Failed to paste file: ${(err as Error).message}`,
-      "fileUtils",
-      __filename
-    );
+    logger.error(`Failed to paste file: ${(err as Error).message}`, "fileUtils", __filename);
   }
 };
 

@@ -19,7 +19,7 @@ A minimal VS Code extension to copy file paths, folder structures, and contents 
 - **Paste File**: Pastes a previously copied file into the selected folder.
 - **Copy File Contents**: Copies only the contents of a file to the clipboard (without its path).
 
-Now you can copy and paste files just like in Windows Explorer! 
+Now you can copy and paste files just like in Windows Explorer!
 
 ## Usage
 
@@ -122,4 +122,4 @@ Run `npm run clean-build-install` to build and install the extension locally.
 
 This project is licensed under the MIT License.
 
-**Disclaimer**: Please provide feedback to help us improve 
+**Disclaimer**: Please provide feedback to help us improve

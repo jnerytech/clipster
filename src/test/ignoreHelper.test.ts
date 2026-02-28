@@ -24,9 +24,7 @@ describe("ignoreHelper – filterIgnoredFiles", () => {
 
   it("filters files matching additionalIgnores patterns", () => {
     const files = ["index.ts", "app.log", "debug.log"];
-    const result = filterIgnoredFiles("/workspace", files, "/workspace", [
-      "*.log",
-    ]);
+    const result = filterIgnoredFiles("/workspace", files, "/workspace", ["*.log"]);
     expect(result).toEqual(["index.ts"]);
   });
 
@@ -46,20 +44,12 @@ describe("ignoreHelper – filterIgnoredFiles", () => {
   });
 
   it("returns empty array when files argument is not an array", () => {
-    const result = filterIgnoredFiles(
-      "/dir",
-      null as unknown as string[],
-      "/workspace"
-    );
+    const result = filterIgnoredFiles("/dir", null as unknown as string[], "/workspace");
     expect(result).toEqual([]);
   });
 
   it("returns empty array when dir is invalid", () => {
-    const result = filterIgnoredFiles(
-      null as unknown as string,
-      ["file.ts"],
-      "/workspace"
-    );
+    const result = filterIgnoredFiles(null as unknown as string, ["file.ts"], "/workspace");
     expect(result).toEqual([]);
   });
 
@@ -87,9 +77,7 @@ describe("ignoreHelper – filterIgnoredFiles", () => {
     })) as unknown as typeof fs.statSync);
 
     const files = ["node_modules", "src", "index.ts"];
-    const result = filterIgnoredFiles("/workspace", files, "/workspace", [
-      "node_modules/",
-    ]);
+    const result = filterIgnoredFiles("/workspace", files, "/workspace", ["node_modules/"]);
     expect(result).not.toContain("node_modules");
     expect(result).toContain("src");
     expect(result).toContain("index.ts");

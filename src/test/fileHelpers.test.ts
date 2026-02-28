@@ -24,8 +24,9 @@ function dirent(name: string): fs.Dirent {
 describe("fileHelpers", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (vscode.workspace as unknown as { workspaceFolders: { uri: { fsPath: string } }[] }).workspaceFolders =
-      [{ uri: { fsPath: "/mock/workspace" } }];
+    (
+      vscode.workspace as unknown as { workspaceFolders: { uri: { fsPath: string } }[] }
+    ).workspaceFolders = [{ uri: { fsPath: "/mock/workspace" } }];
     mockFs.existsSync.mockReturnValue(false); // no .gitignore by default
     (vscode.env.clipboard.writeText as jest.Mock).mockResolvedValue(undefined);
   });
@@ -155,9 +156,7 @@ describe("fileHelpers", () => {
 
   describe("getFolderStructureAndContent", () => {
     it("throws for an invalid directory path", () => {
-      expect(() =>
-        getFolderStructureAndContent(null as unknown as string)
-      ).toThrow();
+      expect(() => getFolderStructureAndContent(null as unknown as string)).toThrow();
     });
 
     it("returns directory base name as first line", () => {
@@ -262,18 +261,14 @@ describe("fileHelpers", () => {
       (mockFs.readFileSync as jest.Mock).mockReturnValue("file content");
       const uris = [{ fsPath: "/workspace/src/index.ts" } as vscode.Uri];
       await copyFileContentWithPath(uris);
-      const written = (vscode.env.clipboard.writeText as jest.Mock).mock
-        .calls[0][0] as string;
+      const written = (vscode.env.clipboard.writeText as jest.Mock).mock.calls[0][0] as string;
       expect(written).toContain("/workspace/src/index.ts");
       expect(written).toContain("file content");
     });
 
     it("shows information message with file count", async () => {
       (mockFs.readFileSync as jest.Mock).mockReturnValue("content");
-      const uris = [
-        { fsPath: "/a.ts" } as vscode.Uri,
-        { fsPath: "/b.ts" } as vscode.Uri,
-      ];
+      const uris = [{ fsPath: "/a.ts" } as vscode.Uri, { fsPath: "/b.ts" } as vscode.Uri];
       await copyFileContentWithPath(uris);
       expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
         "2 file(s) copied with paths."
@@ -282,9 +277,7 @@ describe("fileHelpers", () => {
 
     it("shows error when clipboard write fails", async () => {
       (mockFs.readFileSync as jest.Mock).mockReturnValue("content");
-      (vscode.env.clipboard.writeText as jest.Mock).mockRejectedValue(
-        new Error("clipboard error")
-      );
+      (vscode.env.clipboard.writeText as jest.Mock).mockRejectedValue(new Error("clipboard error"));
       const uris = [{ fsPath: "/a.ts" } as vscode.Uri];
       await copyFileContentWithPath(uris);
       expect(vscode.window.showErrorMessage).toHaveBeenCalled();
@@ -353,10 +346,7 @@ describe("fileHelpers", () => {
     });
 
     it("processes multiple lines creating mixed files and folders", async () => {
-      await createFileOrFolderFromClipboard(
-        "a.ts\nb.ts\nfolder/",
-        baseUri
-      );
+      await createFileOrFolderFromClipboard("a.ts\nb.ts\nfolder/", baseUri);
       // mkdirSync called for parent dirs + folder
       expect(mockFs.mkdirSync).toHaveBeenCalled();
       expect(mockFs.writeFileSync).toHaveBeenCalled();

@@ -29,8 +29,7 @@ export const filterIgnoredFiles = (
   }
 
   // Fall back to the scanned dir when no workspace root is provided
-  const root =
-    workspaceRoot && typeof workspaceRoot === "string" ? workspaceRoot : dir;
+  const root = workspaceRoot && typeof workspaceRoot === "string" ? workspaceRoot : dir;
 
   const gitignorePath = path.join(root, ".gitignore");
   let patterns = [...additionalIgnores];

@@ -17,9 +17,7 @@ export const traverseDirectory = (
   try {
     rawEntries = fs.readdirSync(dir, { withFileTypes: true });
   } catch (err) {
-    showErrorMessage(
-      `Failed to read directory: ${(err as Error).message}`
-    );
+    showErrorMessage(`Failed to read directory: ${(err as Error).message}`);
     return structure;
   }
 
@@ -94,9 +92,7 @@ export const createDirectoriesRecursively = (dirPath: string): boolean => {
     fs.mkdirSync(dirPath, { recursive: true });
     return true;
   } catch (err) {
-    showErrorMessage(
-      `Failed to create directories: ${(err as Error).message}`
-    );
+    showErrorMessage(`Failed to create directories: ${(err as Error).message}`);
     return false;
   }
 };

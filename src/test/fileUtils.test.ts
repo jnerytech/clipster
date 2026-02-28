@@ -1,11 +1,6 @@
 import fs from "fs";
 import * as vscode from "vscode";
-import {
-  isFile,
-  readFileContent,
-  copyFileToClipboard,
-  pasteFileFromClipboard,
-} from "../fileUtils";
+import { isFile, readFileContent, copyFileToClipboard, pasteFileFromClipboard } from "../fileUtils";
 
 jest.mock("fs");
 
@@ -62,23 +57,17 @@ describe("fileUtils", () => {
     it("writes the file path to the clipboard", async () => {
       const uri = { fsPath: "/workspace/src/index.ts" } as vscode.Uri;
       await copyFileToClipboard(uri);
-      expect(vscode.env.clipboard.writeText).toHaveBeenCalledWith(
-        "/workspace/src/index.ts"
-      );
+      expect(vscode.env.clipboard.writeText).toHaveBeenCalledWith("/workspace/src/index.ts");
     });
 
     it("shows information message with the file basename", async () => {
       const uri = { fsPath: "/workspace/src/index.ts" } as vscode.Uri;
       await copyFileToClipboard(uri);
-      expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
-        "File copied: index.ts"
-      );
+      expect(vscode.window.showInformationMessage).toHaveBeenCalledWith("File copied: index.ts");
     });
 
     it("shows error message when clipboard write fails", async () => {
-      (vscode.env.clipboard.writeText as jest.Mock).mockRejectedValue(
-        new Error("clipboard error")
-      );
+      (vscode.env.clipboard.writeText as jest.Mock).mockRejectedValue(new Error("clipboard error"));
       const uri = { fsPath: "/workspace/src/index.ts" } as vscode.Uri;
       await copyFileToClipboard(uri);
       expect(vscode.window.showErrorMessage).toHaveBeenCalled();
@@ -87,9 +76,7 @@ describe("fileUtils", () => {
 
   describe("pasteFileFromClipboard", () => {
     it("shows error when clipboard content is not a valid file path", async () => {
-      (vscode.env.clipboard.readText as jest.Mock).mockResolvedValue(
-        "/nonexistent/path.ts"
-      );
+      (vscode.env.clipboard.readText as jest.Mock).mockResolvedValue("/nonexistent/path.ts");
       mockFs.existsSync.mockReturnValue(false);
       const targetUri = { fsPath: "/workspace/dest" } as vscode.Uri;
       await pasteFileFromClipboard(targetUri);
@@ -107,13 +94,8 @@ describe("fileUtils", () => {
       mockFs.copyFileSync.mockReturnValue(undefined);
       const targetUri = { fsPath: dest } as vscode.Uri;
       await pasteFileFromClipboard(targetUri);
-      expect(mockFs.copyFileSync).toHaveBeenCalledWith(
-        src,
-        `${dest}/file.ts`
-      );
-      expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
-        "File pasted: file.ts"
-      );
+      expect(mockFs.copyFileSync).toHaveBeenCalledWith(src, `${dest}/file.ts`);
+      expect(vscode.window.showInformationMessage).toHaveBeenCalledWith("File pasted: file.ts");
     });
 
     it("shows warning when destination file already exists", async () => {
@@ -127,9 +109,7 @@ describe("fileUtils", () => {
     });
 
     it("shows error when clipboard read throws", async () => {
-      (vscode.env.clipboard.readText as jest.Mock).mockRejectedValue(
-        new Error("clipboard error")
-      );
+      (vscode.env.clipboard.readText as jest.Mock).mockRejectedValue(new Error("clipboard error"));
       const targetUri = { fsPath: "/workspace/dest" } as vscode.Uri;
       await pasteFileFromClipboard(targetUri);
       expect(vscode.window.showErrorMessage).toHaveBeenCalled();

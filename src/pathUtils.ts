@@ -35,24 +35,17 @@ export const getBaseDirectory = (uri: vscode.Uri): string | null => {
  *  - Bare name (e.g. "index.ts") → resolve from the right-clicked folder
  *    (baseDir), which is the intuitive behaviour.
  */
-export const resolveTargetPath = (
-  clipboardContent: string,
-  baseDir: string
-): string | null => {
+export const resolveTargetPath = (clipboardContent: string, baseDir: string): string | null => {
   if (path.isAbsolute(clipboardContent)) {
     return path.normalize(clipboardContent);
   }
 
-  const containsSeparator =
-    clipboardContent.includes("/") || clipboardContent.includes("\\");
+  const containsSeparator = clipboardContent.includes("/") || clipboardContent.includes("\\");
 
   if (containsSeparator) {
-    const workspaceRoot =
-      vscode.workspace.workspaceFolders?.[0]?.uri?.fsPath;
+    const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri?.fsPath;
     if (!workspaceRoot) {
-      showErrorMessage(
-        "No workspace found. Unable to determine relative path."
-      );
+      showErrorMessage("No workspace found. Unable to determine relative path.");
       return null;
     }
     return path.normalize(path.join(workspaceRoot, clipboardContent));

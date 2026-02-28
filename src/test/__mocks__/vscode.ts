@@ -10,9 +10,7 @@ const vscode = {
     showTextDocument: jest.fn(),
   },
   workspace: {
-    workspaceFolders: [
-      { uri: { fsPath: "/mock/workspace" } },
-    ] as { uri: { fsPath: string } }[],
+    workspaceFolders: [{ uri: { fsPath: "/mock/workspace" } }] as { uri: { fsPath: string } }[],
     getConfiguration: jest.fn(() => ({
       get: jest.fn((_key: string, defaultValue: unknown) => defaultValue),
     })),
