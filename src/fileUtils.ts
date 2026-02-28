@@ -45,14 +45,51 @@ export const copyFileToClipboard = async (uri: vscode.Uri): Promise<void> => {
   }
 };
 
+/**
+ * Recursively copies a directory tree from `src` to `dest`.
+ * Used by pasteFileFromClipboard to support folder paste (BUG-7 fix).
+ */
+const copyDirectorySync = (src: string, dest: string): void => {
+  fs.mkdirSync(dest, { recursive: true });
+  for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
+    const srcPath = path.join(src, entry.name);
+    const destPath = path.join(dest, entry.name);
+    if (entry.isDirectory()) {
+      copyDirectorySync(srcPath, destPath);
+    } else {
+      fs.copyFileSync(srcPath, destPath);
+    }
+  }
+};
+
 export const pasteFileFromClipboard = async (targetUri: vscode.Uri): Promise<void> => {
   try {
-    const clipboardContent = await vscode.env.clipboard.readText();
+    const clipboardContent = (await vscode.env.clipboard.readText()).trim();
 
-    if (!fs.existsSync(clipboardContent)) {
+    if (!clipboardContent || !fs.existsSync(clipboardContent)) {
       showErrorMessage("Clipboard does not contain a valid file path.");
       logger.error("Clipboard does not contain a valid file path.", "fileUtils", __filename);
       return;
+    }
+
+    // VULN-3 fix: the source must reside within the current workspace to prevent
+    // an attacker (or malicious clipboard content) from copying arbitrary files
+    // from anywhere on disk into the workspace.
+    const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri?.fsPath;
+    if (workspaceRoot) {
+      const normSrc = path.normalize(clipboardContent);
+      const normRoot = path.normalize(workspaceRoot);
+      const srcWithSep = normSrc.endsWith(path.sep) ? normSrc : normSrc + path.sep;
+      const rootWithSep = normRoot.endsWith(path.sep) ? normRoot : normRoot + path.sep;
+      if (!srcWithSep.startsWith(rootWithSep) && normSrc !== normRoot) {
+        showErrorMessage("Paste blocked: source path is outside the current workspace.");
+        logger.error(
+          `Paste blocked: "${clipboardContent}" is outside workspace "${workspaceRoot}"`,
+          "fileUtils",
+          __filename
+        );
+        return;
+      }
     }
 
     const targetPath = path.join(targetUri.fsPath, path.basename(clipboardContent));
@@ -63,9 +100,19 @@ export const pasteFileFromClipboard = async (targetUri: vscode.Uri): Promise<voi
       return;
     }
 
-    fs.copyFileSync(clipboardContent, targetPath);
-    showInformationMessage(`File pasted: ${path.basename(targetPath)}`);
-    logger.log(`File pasted to: ${targetPath}`, "fileUtils", __filename);
+    const sourceStat = fs.statSync(clipboardContent);
+    if (sourceStat.isDirectory()) {
+      // BUG-7 fix: the previous code used fs.copyFileSync which only works for
+      // files.  Attempting to paste a folder produced an EISDIR error despite
+      // the command being labelled "Copy File(s) and/or Folder(s)".
+      copyDirectorySync(clipboardContent, targetPath);
+      showInformationMessage(`Folder pasted: ${path.basename(targetPath)}`);
+      logger.log(`Folder pasted to: ${targetPath}`, "fileUtils", __filename);
+    } else {
+      fs.copyFileSync(clipboardContent, targetPath);
+      showInformationMessage(`File pasted: ${path.basename(targetPath)}`);
+      logger.log(`File pasted to: ${targetPath}`, "fileUtils", __filename);
+    }
   } catch (err) {
     showErrorMessage(`Failed to paste file: ${(err as Error).message}`);
     logger.error(`Failed to paste file: ${(err as Error).message}`, "fileUtils", __filename);

@@ -1,7 +1,8 @@
 // src/directoryUtils.ts
 import fs from "fs";
 import path from "path";
-import { filterIgnoredFiles } from "./ignoreHelper";
+import type { Ignore } from "ignore";
+import { buildIgnoreFilter, filterIgnoredFiles } from "./ignoreHelper";
 import { formatStructure } from "./structureFormatter";
 import { showErrorMessage } from "./messageUtils";
 
@@ -9,9 +10,14 @@ export const traverseDirectory = (
   dir: string,
   workspaceRoot: string,
   additionalIgnores: string[] = [],
-  indent = ""
+  indent = "",
+  ig?: Ignore // cached ignore filter — built once at the top-level call and shared
 ): string => {
   let structure = "";
+
+  // Build the filter exactly once per traversal root; all recursive calls reuse it.
+  // This eliminates the O(n-directories) .gitignore re-reads (BUG-2 fix).
+  const filter: Ignore = ig ?? buildIgnoreFilter(workspaceRoot, additionalIgnores);
 
   let rawEntries: fs.Dirent[];
   try {
@@ -26,7 +32,8 @@ export const traverseDirectory = (
     dir,
     rawEntries.map((e) => e.name),
     workspaceRoot,
-    additionalIgnores
+    additionalIgnores,
+    filter // pass the cached filter — avoids another .gitignore read inside
   );
 
   // Separate filtered names into directories and files using safe stat
@@ -52,31 +59,20 @@ export const traverseDirectory = (
 
   dirs.forEach((directory, index) => {
     const isLast = index === dirs.length - 1 && files.length === 0;
-    // Use filtered children to determine whether the folder has visible children
     const childPath = path.join(dir, directory);
-    let childEntries: fs.Dirent[] = [];
-    try {
-      childEntries = fs.readdirSync(childPath, { withFileTypes: true });
-    } catch {
-      // Can't read child dir; treat as empty
-    }
-    const visibleChildren = filterIgnoredFiles(
-      childPath,
-      childEntries.map((e) => e.name),
-      workspaceRoot,
-      additionalIgnores
-    );
-    const hasChildren = visibleChildren.length > 0;
 
     structure += formatStructure(directory, "folder", indent, isLast);
-    if (hasChildren) {
-      structure += traverseDirectory(
-        childPath,
-        workspaceRoot,
-        additionalIgnores,
-        `${indent}${isLast ? "  " : "┃ "}`
-      );
-    }
+
+    // Recurse directly without a lookahead readdir (BUG-3 fix).
+    // An empty or fully-filtered directory simply returns "" — no connector glyph
+    // is added for it and the visual result is identical to the old behaviour.
+    structure += traverseDirectory(
+      childPath,
+      workspaceRoot,
+      additionalIgnores,
+      `${indent}${isLast ? "  " : "┃ "}`,
+      filter // share the already-built filter across all recursive calls
+    );
   });
 
   files.forEach((file, index) => {
