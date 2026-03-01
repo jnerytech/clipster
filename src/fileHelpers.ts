@@ -313,6 +313,240 @@ export const copyFileContentWithPath = async (uris: vscode.Uri[]): Promise<void>
 };
 
 /**
+ * Copies selected files' content with line numbers prefixed to each line.
+ */
+export const copyFileContentWithLineNumbers = async (uris: vscode.Uri[]): Promise<void> => {
+  const config = vscode.workspace.getConfiguration("clipster");
+  const maxSizeKB = config.get<number>("maxRootSizeKB", 500);
+  const maxBytes = maxSizeKB * 1024;
+
+  let totalSize = 0;
+  const parts: string[] = [];
+  let truncated = false;
+
+  for (const uri of uris) {
+    const filePath = uri.fsPath;
+    let stats: fs.Stats;
+    try {
+      stats = fs.statSync(filePath);
+    } catch {
+      continue;
+    }
+    if (!stats.isFile()) continue;
+
+    if (totalSize + stats.size > maxBytes) {
+      truncated = true;
+      break;
+    }
+
+    const fileContent = readFileContent(filePath);
+    const lines = fileContent.split("\n");
+    const width = String(lines.length).length;
+    const numbered = lines
+      .map((line, i) => `${String(i + 1).padStart(width)} | ${line}`)
+      .join("\n");
+    parts.push(`File: ${filePath}${os.EOL}${numbered}`);
+    totalSize += stats.size;
+  }
+
+  if (!parts.length) {
+    vscode.window.showWarningMessage("No files to copy or total size exceeds limit.");
+    return;
+  }
+
+  if (truncated) {
+    vscode.window.showWarningMessage(
+      `Size limit (${maxSizeKB} KB) reached; ${parts.length} of ${uris.length} file(s) included.`
+    );
+  }
+
+  try {
+    await vscode.env.clipboard.writeText(parts.join(`${os.EOL}${os.EOL}`));
+    vscode.window.showInformationMessage(`${parts.length} file(s) copied with line numbers.`);
+  } catch (err) {
+    vscode.window.showErrorMessage(`Failed to copy files: ${(err as Error).message}`);
+    logger.error(`Failed to copy files: ${(err as Error).message}`, "fileHelpers", __filename);
+  }
+};
+
+/**
+ * Copies the active editor's selected text with the file path and line range as context header.
+ */
+export const copySelectionWithContext = async (editor: vscode.TextEditor): Promise<void> => {
+  const { document, selection } = editor;
+  const filePath = document.uri.fsPath;
+  const startLine = selection.start.line + 1;
+  const endLine = selection.end.line + 1;
+  const selectedText = document.getText(selection);
+  const lang = document.languageId;
+
+  const header = `File: ${filePath} (lines ${startLine}-${endLine})`;
+  const content = `${header}${os.EOL}\`\`\`${lang}${os.EOL}${selectedText}${os.EOL}\`\`\``;
+
+  try {
+    await vscode.env.clipboard.writeText(content);
+    vscode.window.showInformationMessage(`Selection (lines ${startLine}-${endLine}) copied.`);
+  } catch (err) {
+    vscode.window.showErrorMessage(`Failed to copy selection: ${(err as Error).message}`);
+    logger.error(`Failed to copy selection: ${(err as Error).message}`, "fileHelpers", __filename);
+  }
+};
+
+/**
+ * Copies selected files' content alongside their VS Code diagnostics (errors/warnings).
+ */
+export const copyFileContentWithDiagnostics = async (uris: vscode.Uri[]): Promise<void> => {
+  const config = vscode.workspace.getConfiguration("clipster");
+  const maxSizeKB = config.get<number>("maxRootSizeKB", 500);
+  const maxBytes = maxSizeKB * 1024;
+
+  const severityLabel = (s: vscode.DiagnosticSeverity): string => {
+    switch (s) {
+      case vscode.DiagnosticSeverity.Error:
+        return "ERROR";
+      case vscode.DiagnosticSeverity.Warning:
+        return "WARNING";
+      case vscode.DiagnosticSeverity.Information:
+        return "INFO";
+      case vscode.DiagnosticSeverity.Hint:
+        return "HINT";
+      default:
+        return "UNKNOWN";
+    }
+  };
+
+  let totalSize = 0;
+  const parts: string[] = [];
+  let truncated = false;
+
+  for (const uri of uris) {
+    const filePath = uri.fsPath;
+    let stats: fs.Stats;
+    try {
+      stats = fs.statSync(filePath);
+    } catch {
+      continue;
+    }
+    if (!stats.isFile()) continue;
+
+    if (totalSize + stats.size > maxBytes) {
+      truncated = true;
+      break;
+    }
+
+    const fileContent = readFileContent(filePath);
+    const diagnostics = vscode.languages.getDiagnostics(uri);
+
+    let block = `File: ${filePath}${os.EOL}${fileContent}`;
+
+    if (diagnostics.length === 0) {
+      block += `${os.EOL}${os.EOL}Diagnostics: none`;
+    } else {
+      const lineWidth = String(Math.max(...diagnostics.map((d) => d.range.start.line + 1))).length;
+      const diagLines = diagnostics.map((d) => {
+        const line = String(d.range.start.line + 1).padStart(lineWidth);
+        const sev = severityLabel(d.severity);
+        const code = d.code ? ` [${d.code}]` : "";
+        const src = d.source ? ` (${d.source})` : "";
+        return `  Line ${line} | ${sev}${src}${code} ${d.message}`;
+      });
+      const issueWord = diagnostics.length === 1 ? "issue" : "issues";
+      block += `${os.EOL}${os.EOL}Diagnostics (${diagnostics.length} ${issueWord}):${os.EOL}${diagLines.join(os.EOL)}`;
+    }
+
+    parts.push(block);
+    totalSize += stats.size;
+  }
+
+  if (!parts.length) {
+    vscode.window.showWarningMessage("No files to copy or total size exceeds limit.");
+    return;
+  }
+
+  if (truncated) {
+    vscode.window.showWarningMessage(
+      `Size limit (${maxSizeKB} KB) reached; ${parts.length} of ${uris.length} file(s) included.`
+    );
+  }
+
+  try {
+    await vscode.env.clipboard.writeText(parts.join(`${os.EOL}${os.EOL}`));
+    vscode.window.showInformationMessage(`${parts.length} file(s) copied with diagnostics.`);
+  } catch (err) {
+    vscode.window.showErrorMessage(`Failed to copy files: ${(err as Error).message}`);
+    logger.error(`Failed to copy files: ${(err as Error).message}`, "fileHelpers", __filename);
+  }
+};
+
+/**
+ * Copies multiple selected files as a single concatenated clipboard entry,
+ * with a numbered separator header between each file.
+ */
+export const copyMultipleFilesContent = async (uris: vscode.Uri[]): Promise<void> => {
+  const config = vscode.workspace.getConfiguration("clipster");
+  const maxSizeKB = config.get<number>("maxRootSizeKB", 500);
+  const maxBytes = maxSizeKB * 1024;
+
+  const fileUris = uris.filter((uri) => {
+    try {
+      return fs.statSync(uri.fsPath).isFile();
+    } catch {
+      return false;
+    }
+  });
+
+  if (!fileUris.length) {
+    vscode.window.showWarningMessage("No files selected.");
+    return;
+  }
+
+  const total = fileUris.length;
+  const sep = "=".repeat(40);
+  let totalSize = 0;
+  const parts: string[] = [];
+  let truncated = false;
+
+  for (let i = 0; i < fileUris.length; i++) {
+    const filePath = fileUris[i].fsPath;
+    let stats: fs.Stats;
+    try {
+      stats = fs.statSync(filePath);
+    } catch {
+      continue;
+    }
+
+    if (totalSize + stats.size > maxBytes) {
+      truncated = true;
+      break;
+    }
+
+    const fileContent = readFileContent(filePath);
+    const header = `${sep}${os.EOL}File ${i + 1}/${total}: ${filePath}${os.EOL}${sep}`;
+    parts.push(`${header}${os.EOL}${fileContent}`);
+    totalSize += stats.size;
+  }
+
+  if (!parts.length) {
+    vscode.window.showWarningMessage("No files to copy or total size exceeds limit.");
+    return;
+  }
+
+  if (truncated) {
+    vscode.window.showWarningMessage(
+      `Size limit (${maxSizeKB} KB) reached; ${parts.length} of ${total} file(s) included.`
+    );
+  }
+
+  try {
+    await vscode.env.clipboard.writeText(parts.join(`${os.EOL}${os.EOL}`));
+    vscode.window.showInformationMessage(`${parts.length} file(s) copied.`);
+  } catch (err) {
+    vscode.window.showErrorMessage(`Failed to copy files: ${(err as Error).message}`);
+    logger.error(`Failed to copy files: ${(err as Error).message}`, "fileHelpers", __filename);
+  }
+};
+
+/**
  * Retrieves folder structure and file contents recursively.
  * workspaceRoot is threaded through all recursive calls so that the
  * ignore filter always computes paths relative to the actual workspace root.
