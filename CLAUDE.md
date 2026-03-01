@@ -58,6 +58,7 @@ All source files use **TypeScript** (`ES2020` target) and are compiled to Common
 | `clipster.copyFileContentWithDiagnostics`    | Copy File Content with Diagnostics     |
 | `clipster.copyMultipleFilesContent`          | Copy Multiple Files (Concatenated)     |
 | `clipster.copyFolderFilesWithLineNumbers`    | Copy All Files with Line Numbers       |
+| `clipster.copyFolderFilesWithDiagnostics`    | Copy All Files with Diagnostics        |
 
 All commands are surfaced under a **Clipster** submenu in the Explorer context menu. Each command is conditionally registered via `registerConditionalCommand()` based on its corresponding `clipster.*` boolean setting.
 
@@ -139,6 +140,7 @@ All test files in `tests/` are active `.test.ts` files. Note that `jest` must be
 | `showCopyFileContentWithDiagnostics`    | boolean | `true`                                                                                                                  | Enable Copy File Content with VS Code Diagnostics                                                                  |
 | `showCopyMultipleFilesContent`          | boolean | `true`                                                                                                                  | Enable Copy Multiple Selected Files (concatenated)                                                                 |
 | `showCopyFolderFilesWithLineNumbers`    | boolean | `true`                                                                                                                  | Enable Copy All Files with Line Numbers for folders                                                                |
+| `showCopyFolderFilesWithDiagnostics`    | boolean | `true`                                                                                                                  | Enable Copy All Files with Diagnostics for folders                                                                 |
 | `defaultIgnores`                        | array   | `["node_modules/", ".git/", "dist/", "build/", "out/", "coverage/", "__pycache__/", ".DS_Store", "Thumbs.db", "*.log"]` | Built-in ignore patterns applied even without a `.gitignore`. Users can remove entries or clear the list entirely. |
 | `additionalIgnores`                     | array   | `[]`                                                                                                                    | Extra patterns added on top of `defaultIgnores` and `.gitignore`                                                   |
 | `maxRootFiles`                          | integer | `10`                                                                                                                    | Max files for root-folder copy-with-content                                                                        |

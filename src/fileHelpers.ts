@@ -465,6 +465,133 @@ export const copyFolderFilesWithLineNumbers = async (
 };
 
 /**
+ * Recursively collects all files under a folder, renders each with its VS Code
+ * diagnostics appended, and writes the combined result to the clipboard.
+ */
+export const copyFolderFilesWithDiagnostics = async (
+  uri: vscode.Uri,
+  additionalIgnores: string[] = []
+): Promise<void> => {
+  const dir = uri.fsPath;
+  const config = vscode.workspace.getConfiguration("clipster");
+  const maxSizeKB = config.get<number>("maxRootSizeKB", 500);
+  const maxBytes = maxSizeKB * 1024;
+  const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri?.fsPath ?? dir;
+
+  const severityLabel = (s: vscode.DiagnosticSeverity): string => {
+    switch (s) {
+      case vscode.DiagnosticSeverity.Error:
+        return "ERROR";
+      case vscode.DiagnosticSeverity.Warning:
+        return "WARNING";
+      case vscode.DiagnosticSeverity.Information:
+        return "INFO";
+      case vscode.DiagnosticSeverity.Hint:
+        return "HINT";
+      default:
+        return "UNKNOWN";
+    }
+  };
+
+  const parts: string[] = [];
+  let totalSize = 0;
+  let truncated = false;
+
+  const collect = (currentDir: string, filter: Ignore): void => {
+    if (truncated) return;
+    let rawEntries: fs.Dirent[];
+    try {
+      rawEntries = fs.readdirSync(currentDir, { withFileTypes: true });
+    } catch (err) {
+      logger.error(
+        `Unable to read directory: ${currentDir} - ${(err as Error).message}`,
+        "copyFolderFilesWithDiagnostics",
+        __filename
+      );
+      return;
+    }
+
+    const entries = filterIgnoredFiles(
+      currentDir,
+      rawEntries.map((e) => e.name),
+      workspaceRoot,
+      additionalIgnores,
+      filter
+    );
+
+    for (const entry of entries) {
+      if (truncated) return;
+      const entryPath = path.join(currentDir, entry);
+      let stats: fs.Stats;
+      try {
+        stats = fs.statSync(entryPath);
+      } catch {
+        continue;
+      }
+      if (stats.isDirectory()) {
+        collect(entryPath, filter);
+      } else {
+        if (totalSize + stats.size > maxBytes) {
+          truncated = true;
+          return;
+        }
+        const content = readFileContent(entryPath);
+        const fileUri = vscode.Uri.file(entryPath);
+        const diagnostics = vscode.languages.getDiagnostics(fileUri);
+
+        let block = `File: ${entryPath}${os.EOL}${content}`;
+
+        if (diagnostics.length === 0) {
+          block += `${os.EOL}${os.EOL}Diagnostics: none`;
+        } else {
+          const lineWidth = String(
+            Math.max(...diagnostics.map((d) => d.range.start.line + 1))
+          ).length;
+          const diagLines = diagnostics.map((d) => {
+            const line = String(d.range.start.line + 1).padStart(lineWidth);
+            const sev = severityLabel(d.severity);
+            const code = d.code ? ` [${d.code}]` : "";
+            const src = d.source ? ` (${d.source})` : "";
+            return `  Line ${line} | ${sev}${src}${code} ${d.message}`;
+          });
+          const issueWord = diagnostics.length === 1 ? "issue" : "issues";
+          block += `${os.EOL}${os.EOL}Diagnostics (${diagnostics.length} ${issueWord}):${os.EOL}${diagLines.join(os.EOL)}`;
+        }
+
+        parts.push(block);
+        totalSize += stats.size;
+      }
+    }
+  };
+
+  const filter = buildIgnoreFilter(workspaceRoot, additionalIgnores);
+  collect(dir, filter);
+
+  if (!parts.length) {
+    vscode.window.showWarningMessage("No files found or total size exceeds limit.");
+    return;
+  }
+
+  if (truncated) {
+    vscode.window.showWarningMessage(
+      `Size limit (${maxSizeKB} KB) reached; ${parts.length} file(s) included.`
+    );
+  }
+
+  try {
+    await vscode.env.clipboard.writeText(parts.join(`${os.EOL}${os.EOL}`));
+    vscode.window.showInformationMessage(`${parts.length} file(s) copied with diagnostics.`);
+  } catch (err) {
+    vscode.window.showErrorMessage(`Failed to copy files: ${(err as Error).message}`);
+    logger.error(
+      `Failed to copy files: ${(err as Error).message}`,
+      "copyFolderFilesWithDiagnostics",
+      __filename
+    );
+  }
+};
+
+/**
  * Copies the active editor's selected text with the file path and line range as context header.
  */
 export const copySelectionWithContext = async (editor: vscode.TextEditor): Promise<void> => {

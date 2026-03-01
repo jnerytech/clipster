@@ -10,6 +10,7 @@ import {
   copyRootFolderStructureAndContent,
   copyFileContentWithPath,
   copyFolderFilesWithLineNumbers,
+  copyFolderFilesWithDiagnostics,
   createFileOrFolderFromClipboard,
 } from "../src/fileHelpers";
 
@@ -479,6 +480,106 @@ describe("fileHelpers", () => {
       (mockFs.readFileSync as jest.Mock).mockReturnValue("x");
       (vscode.env.clipboard.writeText as jest.Mock).mockRejectedValue(new Error("write failed"));
       await copyFolderFilesWithLineNumbers(folderUri);
+      expect(vscode.window.showErrorMessage).toHaveBeenCalled();
+    });
+  });
+
+  // ─── copyFolderFilesWithDiagnostics ───────────────────────────────────────────
+
+  describe("copyFolderFilesWithDiagnostics", () => {
+    const folderUri = { fsPath: "/mock/workspace/src" } as vscode.Uri;
+
+    it("copies a file with content and 'Diagnostics: none' when no issues", async () => {
+      (mockFs.readdirSync as jest.Mock).mockReturnValue([dirent("index.ts")]);
+      mockFs.statSync.mockReturnValue({
+        isFile: () => true,
+        isDirectory: () => false,
+        size: 50,
+      } as unknown as fs.Stats);
+      (mockFs.readFileSync as jest.Mock).mockReturnValue("const x = 1;");
+      (vscode.languages.getDiagnostics as jest.Mock).mockReturnValue([]);
+      await copyFolderFilesWithDiagnostics(folderUri);
+      const written = (vscode.env.clipboard.writeText as jest.Mock).mock.calls[0][0] as string;
+      expect(written).toContain("index.ts");
+      expect(written).toContain("Diagnostics: none");
+    });
+
+    it("formats diagnostics correctly when issues exist", async () => {
+      (mockFs.readdirSync as jest.Mock).mockReturnValue([dirent("bad.ts")]);
+      mockFs.statSync.mockReturnValue({
+        isFile: () => true,
+        isDirectory: () => false,
+        size: 50,
+      } as unknown as fs.Stats);
+      (mockFs.readFileSync as jest.Mock).mockReturnValue("bad code");
+      (vscode.languages.getDiagnostics as jest.Mock).mockReturnValue([
+        {
+          range: { start: { line: 4 } },
+          severity: 0, // Error
+          message: "Cannot find name 'foo'",
+          code: "TS2304",
+          source: "ts",
+        },
+      ]);
+      await copyFolderFilesWithDiagnostics(folderUri);
+      const written = (vscode.env.clipboard.writeText as jest.Mock).mock.calls[0][0] as string;
+      expect(written).toContain("Diagnostics (1 issue):");
+      expect(written).toContain("Line 5");
+      expect(written).toContain("ERROR");
+      expect(written).toContain("Cannot find name 'foo'");
+    });
+
+    it("shows information message with file count", async () => {
+      (mockFs.readdirSync as jest.Mock).mockReturnValue([dirent("a.ts")]);
+      mockFs.statSync.mockReturnValue({
+        isFile: () => true,
+        isDirectory: () => false,
+        size: 10,
+      } as unknown as fs.Stats);
+      (mockFs.readFileSync as jest.Mock).mockReturnValue("x");
+      (vscode.languages.getDiagnostics as jest.Mock).mockReturnValue([]);
+      await copyFolderFilesWithDiagnostics(folderUri);
+      expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
+        "1 file(s) copied with diagnostics."
+      );
+    });
+
+    it("shows warning and stops when size limit is exceeded", async () => {
+      (mockFs.readdirSync as jest.Mock).mockReturnValue([dirent("big0.ts"), dirent("big1.ts")]);
+      mockFs.statSync.mockReturnValue({
+        isFile: () => true,
+        isDirectory: () => false,
+        size: 300 * 1024,
+      } as unknown as fs.Stats);
+      (mockFs.readFileSync as jest.Mock).mockReturnValue("x");
+      (vscode.languages.getDiagnostics as jest.Mock).mockReturnValue([]);
+      await copyFolderFilesWithDiagnostics(folderUri);
+      expect(vscode.window.showWarningMessage).toHaveBeenCalled();
+      const written = (vscode.env.clipboard.writeText as jest.Mock).mock.calls[0][0] as string;
+      expect(written).toContain("big0.ts");
+      expect(written).not.toContain("big1.ts");
+    });
+
+    it("shows warning when no files are found", async () => {
+      (mockFs.readdirSync as jest.Mock).mockReturnValue([]);
+      await copyFolderFilesWithDiagnostics(folderUri);
+      expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
+        "No files found or total size exceeds limit."
+      );
+      expect(vscode.env.clipboard.writeText).not.toHaveBeenCalled();
+    });
+
+    it("shows error when clipboard write fails", async () => {
+      (mockFs.readdirSync as jest.Mock).mockReturnValue([dirent("a.ts")]);
+      mockFs.statSync.mockReturnValue({
+        isFile: () => true,
+        isDirectory: () => false,
+        size: 10,
+      } as unknown as fs.Stats);
+      (mockFs.readFileSync as jest.Mock).mockReturnValue("x");
+      (vscode.languages.getDiagnostics as jest.Mock).mockReturnValue([]);
+      (vscode.env.clipboard.writeText as jest.Mock).mockRejectedValue(new Error("write failed"));
+      await copyFolderFilesWithDiagnostics(folderUri);
       expect(vscode.window.showErrorMessage).toHaveBeenCalled();
     });
   });

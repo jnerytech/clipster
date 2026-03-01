@@ -134,6 +134,11 @@
           "default": true,
           "description": "Enable Copy All Files with Line Numbers for folders."
         },
+        "clipster.showCopyFolderFilesWithDiagnostics": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Copy All Files with Diagnostics for folders."
+        },
         "clipster.defaultIgnores": {
           "type": "array",
           "default": [
@@ -223,6 +228,10 @@
       {
         "command": "clipster.copyFolderFilesWithLineNumbers",
         "title": "Copy All Files with Line Numbers"
+      },
+      {
+        "command": "clipster.copyFolderFilesWithDiagnostics",
+        "title": "Copy All Files with Diagnostics"
       }
     ],
     "submenus": [
@@ -279,6 +288,11 @@
         },
         {
           "command": "clipster.copyFolderFilesWithLineNumbers",
+          "group": "2_copy",
+          "when": "explorerResourceIsFolder"
+        },
+        {
+          "command": "clipster.copyFolderFilesWithDiagnostics",
           "group": "2_copy",
           "when": "explorerResourceIsFolder"
         },

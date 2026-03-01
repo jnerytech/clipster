@@ -11,6 +11,7 @@ import {
   copyFileContentWithPath,
   copyFileContentWithLineNumbers,
   copyFolderFilesWithLineNumbers,
+  copyFolderFilesWithDiagnostics,
   copySelectionWithContext,
   copyFileContentWithDiagnostics,
   copyMultipleFilesContent,
@@ -330,6 +331,25 @@ function registerCommands(): void {
         );
         logger.error(
           `Failed to copy folder files with line numbers: ${(err as Error).message}`,
+          MODULE,
+          __filename
+        );
+      }
+    }
+  );
+
+  registerConditionalCommand(
+    "clipster.copyFolderFilesWithDiagnostics",
+    "showCopyFolderFilesWithDiagnostics",
+    async (uri: vscode.Uri) => {
+      try {
+        await copyFolderFilesWithDiagnostics(uri, allIgnores);
+      } catch (err) {
+        vscode.window.showErrorMessage(
+          `Failed to copy folder files with diagnostics: ${(err as Error).message}`
+        );
+        logger.error(
+          `Failed to copy folder files with diagnostics: ${(err as Error).message}`,
           MODULE,
           __filename
         );
