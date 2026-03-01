@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## 1.3.0 (2026-03-01)
+
+
+### Features
+
+* add 4 AI context commands ([0e3e839](https://github.com/jnerytech/clipster/commit/0e3e8394580be250780186f7205a4ef3dc4dc070))
+
+
+### Bug Fixes
+
+* address bugs and performance issues from code review ([4ab005b](https://github.com/jnerytech/clipster/commit/4ab005be3aaf3309f87fff389a333b838b7e28ed))
+* apply review feedback - realpathSync confinement, symlink safety, direntMap optimization ([a7611eb](https://github.com/jnerytech/clipster/commit/a7611ebf0dfe411cdbb495a801bff6d8c0549cb5))
+* force serialize-javascript ^7.0.3 via overrides to patch high severity RCE ([102b527](https://github.com/jnerytech/clipster/commit/102b5273309600410e96b1a70d5822f2cb7022d4))
+* suppress spurious babel__traverse TS error by restricting typeRoots ([3e2b127](https://github.com/jnerytech/clipster/commit/3e2b12774b0d0abd19197f857fac739a0421d8ae))
+* Update qs to 6.14.1 to fix CVE-2025-15284 ([a25c4c0](https://github.com/jnerytech/clipster/commit/a25c4c0fd7cc884076b88fecc80958d45a9454bb))
+
 ### [1.2.106](https://github.com/TheJesper/clipster/compare/v1.2.105...v1.2.106) (2025-02-19)
 
 ### [1.2.105](https://github.com/TheJesper/clipster/compare/v1.2.104...v1.2.105) (2025-02-18)
