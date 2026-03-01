@@ -111,7 +111,16 @@ Clipster respects `.gitignore` files when copying folder structures. You can als
 
 Clipster's core commands are also available as a Node.js CLI. Output goes to **stdout** so you can pipe it directly to your clipboard tool.
 
-### Build the CLI
+### Install globally
+
+```bash
+cd /path/to/clipster
+npm install -g .
+```
+
+This runs `build:cli` automatically (via `prepack`), then links the `clipster` binary to your global npm bin directory so you can use `clipster` from any directory.
+
+### Build the CLI (local use only)
 
 ```bash
 npm run build:cli
@@ -136,23 +145,25 @@ This compiles the CLI to `dist/src/cli.js`.
 ### Examples
 
 ```bash
-# Pipe folder structure to clipboard
-node dist/src/cli.js structure src/      | clip       # Windows
-node dist/src/cli.js structure src/      | pbcopy     # macOS
-node dist/src/cli.js structure src/      | xclip -selection clipboard  # Linux
+# Pipe folder structure to clipboard (globally installed)
+clipster structure src/ | clip       # Windows
+clipster structure src/ | pbcopy     # macOS
+clipster structure src/ | xclip -selection clipboard  # Linux
 
 # Copy a single file with its path header
-node dist/src/cli.js file src/extension.ts | clip
+clipster file src/extension.ts | clip
 
 # Copy multiple files concatenated
-node dist/src/cli.js multi src/platform.ts src/fileHelpers.ts | pbcopy
+clipster multi src/platform.ts src/fileHelpers.ts | pbcopy
 
 # Copy all files in a folder with line numbers
-node dist/src/cli.js folder src/ | clip
+clipster folder src/ | clip
 
 # Copy entire project structure + all file contents
-node dist/src/cli.js content src/ | clip
+clipster content src/ | clip
 ```
+
+If running locally without a global install, replace `clipster` with `node dist/src/cli.js`.
 
 > **Note:** Diagnostics are always reported as "none" in CLI mode — diagnostics require a running VS Code instance with language servers active.
 
