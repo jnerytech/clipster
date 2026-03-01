@@ -10,7 +10,11 @@
   "main": "./dist/extension.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/TheJesper/clipster.git"
+    "url": "https://github.com/jnerytech/clipster.git"
+  },
+  "forkedFrom": {
+    "author": "Jesper Wilfing (TheJesper)",
+    "repository": "https://github.com/TheJesper/clipster"
   },
   "publisher": "conzeon",
   "scripts": {
@@ -110,6 +114,26 @@
           "default": true,
           "description": "Enable copying file contents only."
         },
+        "clipster.showCopyFileContentWithLineNumbers": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Copy File Content with Line Numbers."
+        },
+        "clipster.showCopySelectionWithContext": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Copy Selection with File Path and Line Range."
+        },
+        "clipster.showCopyFileContentWithDiagnostics": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Copy File Content with VS Code Diagnostics."
+        },
+        "clipster.showCopyMultipleFilesContent": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Copy Multiple Selected Files (concatenated)."
+        },
         "clipster.showInClipsterSubmenu": {
           "type": "boolean",
           "default": true,
@@ -168,6 +192,22 @@
       {
         "command": "clipster.pasteFile",
         "title": "Paste File(s) and/or Folder(s)"
+      },
+      {
+        "command": "clipster.copyFileContentWithLineNumbers",
+        "title": "Copy File Content with Line Numbers"
+      },
+      {
+        "command": "clipster.copySelectionWithContext",
+        "title": "Copy Selection with File Context"
+      },
+      {
+        "command": "clipster.copyFileContentWithDiagnostics",
+        "title": "Copy File Content with Diagnostics"
+      },
+      {
+        "command": "clipster.copyMultipleFilesContent",
+        "title": "Copy Multiple Files (Concatenated)"
       }
     ],
     "submenus": [
@@ -221,6 +261,28 @@
           "command": "clipster.pasteFile",
           "group": "4_file",
           "when": "explorerResourceIsFolder"
+        },
+        {
+          "command": "clipster.copyFileContentWithLineNumbers",
+          "group": "2_copy",
+          "when": "explorerResourceIsFile"
+        },
+        {
+          "command": "clipster.copyFileContentWithDiagnostics",
+          "group": "2_copy",
+          "when": "explorerResourceIsFile"
+        },
+        {
+          "command": "clipster.copyMultipleFilesContent",
+          "group": "2_copy",
+          "when": "explorerResourceIsFile"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "clipster.copySelectionWithContext",
+          "group": "9_cutcopypaste",
+          "when": "editorHasSelection"
         }
       ]
     }

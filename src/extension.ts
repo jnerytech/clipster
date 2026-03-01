@@ -9,6 +9,10 @@ import {
   copyRootFolderStructure,
   copyRootFolderStructureAndContent,
   copyFileContentWithPath,
+  copyFileContentWithLineNumbers,
+  copySelectionWithContext,
+  copyFileContentWithDiagnostics,
+  copyMultipleFilesContent,
   createFileOrFolderFromClipboard,
 } from "./fileHelpers";
 import { copyToClipboard } from "./clipboardHelper";
@@ -224,6 +228,86 @@ function registerCommands(): void {
         );
         logger.error(
           `Failed to copy file content with header: ${(err as Error).message}`,
+          MODULE,
+          __filename
+        );
+      }
+    }
+  );
+
+  registerConditionalCommand(
+    "clipster.copyFileContentWithLineNumbers",
+    "showCopyFileContentWithLineNumbers",
+    async (uri: vscode.Uri, uris: vscode.Uri[]) => {
+      try {
+        const targets = Array.isArray(uris) ? uris : [uri];
+        await copyFileContentWithLineNumbers(targets);
+      } catch (err) {
+        vscode.window.showErrorMessage(
+          `Failed to copy file content with line numbers: ${(err as Error).message}`
+        );
+        logger.error(
+          `Failed to copy file content with line numbers: ${(err as Error).message}`,
+          MODULE,
+          __filename
+        );
+      }
+    }
+  );
+
+  registerConditionalCommand(
+    "clipster.copySelectionWithContext",
+    "showCopySelectionWithContext",
+    async () => {
+      try {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+          vscode.window.showErrorMessage("No active editor.");
+          return;
+        }
+        if (editor.selection.isEmpty) {
+          vscode.window.showErrorMessage("No text selected.");
+          return;
+        }
+        await copySelectionWithContext(editor);
+      } catch (err) {
+        vscode.window.showErrorMessage(`Failed to copy selection: ${(err as Error).message}`);
+        logger.error(`Failed to copy selection: ${(err as Error).message}`, MODULE, __filename);
+      }
+    }
+  );
+
+  registerConditionalCommand(
+    "clipster.copyFileContentWithDiagnostics",
+    "showCopyFileContentWithDiagnostics",
+    async (uri: vscode.Uri, uris: vscode.Uri[]) => {
+      try {
+        const targets = Array.isArray(uris) ? uris : [uri];
+        await copyFileContentWithDiagnostics(targets);
+      } catch (err) {
+        vscode.window.showErrorMessage(
+          `Failed to copy file content with diagnostics: ${(err as Error).message}`
+        );
+        logger.error(
+          `Failed to copy file content with diagnostics: ${(err as Error).message}`,
+          MODULE,
+          __filename
+        );
+      }
+    }
+  );
+
+  registerConditionalCommand(
+    "clipster.copyMultipleFilesContent",
+    "showCopyMultipleFilesContent",
+    async (uri: vscode.Uri, uris: vscode.Uri[]) => {
+      try {
+        const targets = Array.isArray(uris) ? uris : [uri];
+        await copyMultipleFilesContent(targets);
+      } catch (err) {
+        vscode.window.showErrorMessage(`Failed to copy multiple files: ${(err as Error).message}`);
+        logger.error(
+          `Failed to copy multiple files: ${(err as Error).message}`,
           MODULE,
           __filename
         );
