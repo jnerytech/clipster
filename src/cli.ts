@@ -1,10 +1,11 @@
 #!/usr/bin/env node
-// src/cli.ts — Clipster CLI entry point
+// src/cli.ts — Clipster CLI entry point (powered by Commander.js)
 // Output goes to stdout so users can pipe to their clipboard tool:
 //   clipster structure src/   | pbcopy
 //   clipster structure src/   | xclip -selection clipboard
 //   clipster structure src/   | clip      (Windows)
 import path from "path";
+import { Command } from "commander";
 import { initPlatform } from "./platform";
 import { CliPlatform } from "./platforms/cli-platform";
 import {
@@ -12,6 +13,7 @@ import {
   getFolderStructureAndContent,
   copyFileContentWithPath,
   copyFileContentWithLineNumbers,
+  copyFileContentWithDiagnostics,
   copyFolderFilesWithLineNumbers,
   copyFolderFilesWithDiagnostics,
   copyMultipleFilesContent,
@@ -19,92 +21,68 @@ import {
 
 initPlatform(new CliPlatform());
 
-const args = process.argv.slice(2);
-const cmd = args[0];
+const program = new Command();
 
-function usage(): void {
-  process.stderr.write(
-    [
-      "Usage:",
-      "  clipster structure <dir>                  Copy folder structure",
-      "  clipster content <dir>                    Copy folder structure + all file contents",
-      "  clipster file <file...>                   Copy file(s) content with path header",
-      "  clipster file --line-numbers <file...>    Copy file(s) with line numbers",
-      "  clipster file --diagnostics <file...>     Copy file(s) with diagnostics",
-      "  clipster folder <dir>                     Copy all files in folder",
-      "  clipster folder --line-numbers <dir>      Copy all files with line numbers",
-      "  clipster folder --diagnostics <dir>       Copy all files with diagnostics",
-      "  clipster multi <file...>                  Copy multiple files concatenated",
-      "",
-      "All output goes to stdout. Pipe to your clipboard tool.",
-    ].join("\n") + "\n"
-  );
-}
+program
+  .name("clipster")
+  .description("Copy file paths, folder structures, and file contents to stdout.")
+  .version("1.3.2");
 
-async function main(): Promise<void> {
-  if (!cmd || cmd === "--help" || cmd === "-h") {
-    usage();
-    process.exit(0);
-  }
-
-  if (cmd === "structure") {
-    const dir = path.resolve(args[1] ?? ".");
-    const result = getFolderStructure(dir);
+program
+  .command("structure <dir>")
+  .description("Folder structure tree (no file contents)")
+  .action((dir: string) => {
+    const result = getFolderStructure(path.resolve(dir));
     process.stdout.write(result + "\n");
-    return;
-  }
+  });
 
-  if (cmd === "content") {
-    const dir = path.resolve(args[1] ?? ".");
-    const result = getFolderStructureAndContent(dir);
+program
+  .command("content <dir>")
+  .description("Folder structure + all file contents")
+  .action((dir: string) => {
+    const result = getFolderStructureAndContent(path.resolve(dir));
     process.stdout.write(result + "\n");
-    return;
-  }
+  });
 
-  if (cmd === "file") {
-    const flag = args[1];
-    if (flag === "--line-numbers") {
-      const files = args.slice(2).map((f) => path.resolve(f));
-      await copyFileContentWithLineNumbers(files);
-    } else if (flag === "--diagnostics") {
-      // getDiagnostics() returns [] in CLI — each file will show "Diagnostics: none"
-      const { copyFileContentWithDiagnostics } = await import("./fileHelpers");
-      const files = args.slice(2).map((f) => path.resolve(f));
-      await copyFileContentWithDiagnostics(files);
+program
+  .command("file <files...>")
+  .description("File(s) content with path header")
+  .option("-n, --line-numbers", "Prefix each line with its line number")
+  .option("-d, --diagnostics", "Append VS Code diagnostics per file (always 'none' in CLI)")
+  .action(async (files: string[], opts: { lineNumbers?: boolean; diagnostics?: boolean }) => {
+    const resolved = files.map((f) => path.resolve(f));
+    if (opts.diagnostics) {
+      await copyFileContentWithDiagnostics(resolved);
+    } else if (opts.lineNumbers) {
+      await copyFileContentWithLineNumbers(resolved);
     } else {
-      const files = args.slice(1).map((f) => path.resolve(f));
-      await copyFileContentWithPath(files);
+      await copyFileContentWithPath(resolved);
     }
-    return;
-  }
+  });
 
-  if (cmd === "folder") {
-    const flag = args[1];
-    if (flag === "--line-numbers") {
-      const dir = path.resolve(args[2] ?? ".");
-      await copyFolderFilesWithLineNumbers(dir);
-    } else if (flag === "--diagnostics") {
-      const dir = path.resolve(args[2] ?? ".");
-      await copyFolderFilesWithDiagnostics(dir);
+program
+  .command("folder <dir>")
+  .description("All files in folder, recursively")
+  .option("-n, --line-numbers", "Prefix each line with its line number (default)")
+  .option("-d, --diagnostics", "Append VS Code diagnostics per file (always 'none' in CLI)")
+  .action(async (dir: string, opts: { lineNumbers?: boolean; diagnostics?: boolean }) => {
+    const resolved = path.resolve(dir);
+    if (opts.diagnostics) {
+      await copyFolderFilesWithDiagnostics(resolved);
     } else {
-      const dir = path.resolve(args[1] ?? ".");
-      await copyFolderFilesWithLineNumbers(dir);
+      await copyFolderFilesWithLineNumbers(resolved);
     }
-    return;
-  }
+  });
 
-  if (cmd === "multi") {
-    const files = args.slice(1).map((f) => path.resolve(f));
-    await copyMultipleFilesContent(files);
-    return;
-  }
+program
+  .command("multi <files...>")
+  .description("Multiple files concatenated with separators")
+  .action(async (files: string[]) => {
+    const resolved = files.map((f) => path.resolve(f));
+    await copyMultipleFilesContent(resolved);
+  });
 
-  process.stderr.write(`[error] Unknown command: ${cmd}\n`);
-  usage();
-  process.exit(1);
-}
-
-main().catch((err: unknown) => {
+program.parseAsync(process.argv).catch((err: unknown) => {
   process.stderr.write(`[error] ${(err as Error).message}\n`);
   process.exit(1);
 });
