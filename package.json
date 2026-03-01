@@ -20,6 +20,10 @@
   "bin": {
     "clipster": "./dist/src/cli.js"
   },
+  "files": [
+    "dist/src/",
+    "README.md"
+  ],
   "scripts": {
     "test": "jest --coverage",
     "test:quick": "jest --onlyChanged",
@@ -27,6 +31,7 @@
     "webpack": "webpack --config webpack.config.cjs --mode development",
     "build": "npm run type-check && webpack --config webpack.config.cjs --mode production --devtool hidden-source-map",
     "build:cli": "tsc -p tsconfig.cli.json",
+    "prepack": "npm run build:cli",
     "clean": "rimraf ./out",
     "bump-build": "standard-version --no-verify && npm run build",
     "clean-build-install": "npm run clean && npm run bump-build && npm run install-extension",
