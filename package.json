@@ -10,7 +10,11 @@
   "main": "./dist/extension.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/TheJesper/clipster.git"
+    "url": "https://github.com/jnerytech/clipster.git"
+  },
+  "forkedFrom": {
+    "author": "Jesper Wilfing (TheJesper)",
+    "repository": "https://github.com/TheJesper/clipster"
   },
   "publisher": "conzeon",
   "scripts": {

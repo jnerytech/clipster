@@ -13,6 +13,7 @@
 **Menu group**: `2_copy` in clipsterMenu
 
 ### Output format
+
 ```
 File: /workspace/src/extension.ts
    1 | import * as vscode from 'vscode';
@@ -23,6 +24,7 @@ File: /workspace/src/extension.ts
 ### Files to change
 
 **`src/fileHelpers.ts`** — Add `copyFileContentWithLineNumbers(uris: vscode.Uri[])`
+
 - Same size guard as `copyFileContentWithPath()` (uses `maxRootSizeKB`)
 - Reads file content, splits by `\n`
 - Pads line numbers to fixed width based on total line count
@@ -30,14 +32,20 @@ File: /workspace/src/extension.ts
 - Writes to clipboard via `vscode.env.clipboard.writeText()`
 
 **`src/extension.ts`** — Register command via `registerConditionalCommand()`:
+
 ```ts
-registerConditionalCommand("clipster.copyFileContentWithLineNumbers", "showCopyFileContentWithLineNumbers", async (uri, allUris) => {
-  const uris = [...(allUris || [uri])].filter(Boolean);
-  await copyFileContentWithLineNumbers(uris as vscode.Uri[]);
-});
+registerConditionalCommand(
+  "clipster.copyFileContentWithLineNumbers",
+  "showCopyFileContentWithLineNumbers",
+  async (uri, allUris) => {
+    const uris = [...(allUris || [uri])].filter(Boolean);
+    await copyFileContentWithLineNumbers(uris as vscode.Uri[]);
+  }
+);
 ```
 
 **`package.json`** — 3 additions:
+
 1. Command declaration in `contributes.commands`
 2. Menu entry in `clipsterMenu` group `2_copy`
 3. Setting `clipster.showCopyFileContentWithLineNumbers`
@@ -53,13 +61,15 @@ registerConditionalCommand("clipster.copyFileContentWithLineNumbers", "showCopyF
 **Menu**: `editor/context` (not Explorer — this operates on active editor selection)
 
 ### Output format
-```
+
+````
 File: /workspace/src/extension.ts (lines 42-57)
 ```ts
 const result = await getFolderStructure(dir, additionalIgnores);
 await copyToClipboard(result);
-```
-```
+````
+
+````
 
 ### Files to change
 
@@ -78,9 +88,10 @@ registerConditionalCommand("clipster.copySelectionWithContext", "showCopySelecti
   if (editor.selection.isEmpty) { showErrorMessage("No text selected."); return; }
   await copySelectionWithContext(editor);
 });
-```
+````
 
 **`package.json`** — 3 additions:
+
 1. Command declaration
 2. Menu entry in `editor/context` with `when: editorHasSelection`
 3. Setting `clipster.showCopySelectionWithContext`
@@ -96,6 +107,7 @@ registerConditionalCommand("clipster.copySelectionWithContext", "showCopySelecti
 **Menu group**: `2_copy` in clipsterMenu
 
 ### Output format
+
 ```
 File: /workspace/src/extension.ts
 <file content>
@@ -109,6 +121,7 @@ Diagnostics (3 issues):
 ### Files to change
 
 **`src/fileHelpers.ts`** — Add `copyFileContentWithDiagnostics(uris: vscode.Uri[])`
+
 - For each URI: reads file content + calls `vscode.languages.getDiagnostics(uri)`
 - Maps `vscode.Diagnostic` severity enum → `ERROR | WARNING | INFO | HINT`
 - Formats diagnostics block appended after content
@@ -118,6 +131,7 @@ Diagnostics (3 issues):
 **`src/extension.ts`** — Register via `registerConditionalCommand()` with multi-URI support
 
 **`package.json`** — 3 additions:
+
 1. Command declaration: `"title": "Copy File Content with Diagnostics"`
 2. Menu entry in `clipsterMenu` group `2_copy`
 3. Setting `clipster.showCopyFileContentWithDiagnostics`
@@ -135,6 +149,7 @@ Diagnostics (3 issues):
 > **Note**: The existing `copyFileContentWithHeader` already accepts multiple URIs internally, but the Explorer multi-selection (`allUris`) may not work reliably for all users. This creates an explicit command that makes multi-file copy a first-class operation with a clear separator format.
 
 ### Output format
+
 ```
 ========================================
 File 1/3: /workspace/src/extension.ts
@@ -155,6 +170,7 @@ File 3/3: /workspace/src/fileUtils.ts
 ### Files to change
 
 **`src/fileHelpers.ts`** — Add `copyMultipleFilesContent(uris: vscode.Uri[])`
+
 - Filters to files only (skips folders, or recurse into them optionally — start with files only)
 - Applies `maxRootSizeKB` guard
 - Formats each file with numbered separator header
@@ -163,6 +179,7 @@ File 3/3: /workspace/src/fileUtils.ts
 **`src/extension.ts`** — Register with multi-URI support (same pattern as `copyFileContentWithHeader`)
 
 **`package.json`** — 3 additions:
+
 1. Command declaration: `"title": "Copy Multiple Files Content"`
 2. Menu entry in `clipsterMenu` group `2_copy` with `when: explorerResourceIsFile`
 3. Setting `clipster.showCopyMultipleFilesContent`
@@ -180,9 +197,9 @@ File 3/3: /workspace/src/fileUtils.ts
 
 ## Files touched in total
 
-| File | Changes |
-|------|---------|
-| `src/fileHelpers.ts` | +4 new exported functions |
-| `src/extension.ts` | +4 `registerConditionalCommand()` calls |
-| `package.json` | +4 commands, +4 menu entries, +4 settings |
-| `src/test/fileHelpers.test.ts` | +tests for each new function |
+| File                           | Changes                                   |
+| ------------------------------ | ----------------------------------------- |
+| `src/fileHelpers.ts`           | +4 new exported functions                 |
+| `src/extension.ts`             | +4 `registerConditionalCommand()` calls   |
+| `package.json`                 | +4 commands, +4 menu entries, +4 settings |
+| `src/test/fileHelpers.test.ts` | +tests for each new function              |
