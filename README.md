@@ -21,6 +21,13 @@ A minimal VS Code extension to copy file paths, folder structures, and contents 
 
 Now you can copy and paste files just like in Windows Explorer!
 
+### **AI Context Commands**
+
+- **Copy File Content with Line Numbers**: Copies the file content with line numbers prepended — ideal for sharing code with AI tools that reference specific lines.
+- **Copy Selection with File Context**: Copies the selected text along with the file path and line range for precise AI context.
+- **Copy File Content with Diagnostics**: Copies the file content along with any VS Code diagnostics (errors/warnings) attached to it.
+- **Copy Multiple Files (Concatenated)**: Copies the content of multiple selected files concatenated into a single clipboard entry.
+
 ## Usage
 
 1. **Right-click** on any file or folder in the VS Code explorer.
@@ -92,10 +99,14 @@ You can customize Clipster's behavior through the following settings in the VS C
 - **Clipster: Max Root Size KB** (`clipster.maxRootSizeKB`): Sets the maximum total size (in KB) for copied root files (default: 500KB).
 - **Clipster: Show in Clipster Submenu** (`clipster.showInClipsterSubmenu`): Show Clipster commands in a submenu or directly in the root menu.
 - **Clipster: Additional Ignores** (`clipster.additionalIgnores`): Add custom file patterns to ignore when copying folder structures.
+- **Clipster: Show Copy File Content with Line Numbers** (`clipster.showCopyFileContentWithLineNumbers`): Enable or disable copying file content with line numbers.
+- **Clipster: Show Copy Selection with Context** (`clipster.showCopySelectionWithContext`): Enable or disable copying the selected text with file path and line range.
+- **Clipster: Show Copy File Content with Diagnostics** (`clipster.showCopyFileContentWithDiagnostics`): Enable or disable copying file content with VS Code diagnostics.
+- **Clipster: Show Copy Multiple Files Content** (`clipster.showCopyMultipleFilesContent`): Enable or disable copying multiple selected files concatenated.
 
 ## Ignoring Files
 
-Clipster respects `.gitignore` and `.vscodeignore` files when copying folder structures. You can also add custom ignore patterns using the **Clipster: Additional Ignores** setting to tailor the output to your needs.
+Clipster respects `.gitignore` files when copying folder structures. You can also add custom ignore patterns using the **Clipster: Additional Ignores** setting to tailor the output to your needs.
 
 ## Installation
 
@@ -107,7 +118,7 @@ Run `npm run clean-build-install` to build and install the extension locally.
 
 ### Scripts Explained
 
-- **test**: Runs the Mocha tests.
+- **test**: Runs the Jest tests.
 - **webpack**: Builds the project in development mode.
 - **build**: Creates a production build using Webpack.
 - **clean**: Removes the `OUT` directory.
@@ -115,8 +126,6 @@ Run `npm run clean-build-install` to build and install the extension locally.
 - **clean-build-install**: Cleans, builds, and installs the extension.
 - **install-extension**: Installs the extension from the build output.
 - **release**: Creates a new release version.
-
-**Note**: The tests are currently not passing.
 
 ## License
 

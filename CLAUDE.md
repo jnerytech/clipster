@@ -53,6 +53,10 @@ All source files use **TypeScript** (`ES2020` target) and are compiled to Common
 | `clipster.copyRootFolderStructureAndContent` | Copy Root Folder Structure and Content |
 | `clipster.copyFile`                          | Copy File(s) and/or Folder(s)          |
 | `clipster.pasteFile`                         | Paste File(s) and/or Folder(s)         |
+| `clipster.copyFileContentWithLineNumbers`    | Copy File Content with Line Numbers    |
+| `clipster.copySelectionWithContext`          | Copy Selection with File Context       |
+| `clipster.copyFileContentWithDiagnostics`   | Copy File Content with Diagnostics     |
+| `clipster.copyMultipleFilesContent`          | Copy Multiple Files (Concatenated)     |
 
 All commands are surfaced under a **Clipster** submenu in the Explorer context menu. Each command is conditionally registered via `registerConditionalCommand()` based on its corresponding `clipster.*` boolean setting.
 
@@ -129,6 +133,10 @@ All test files in `src/test/` are active `.test.ts` files. Note that `jest` must
 | `showCopyFile`                          | boolean | `true`  | Enable copy file/folder                                                                                                           |
 | `showPasteFile`                         | boolean | `true`  | Enable paste file/folder                                                                                                          |
 | `showCopyFileContents`                  | boolean | `true`  | Enable copying file contents only                                                                                                 |
+| `showCopyFileContentWithLineNumbers`    | boolean | `true`  | Enable Copy File Content with Line Numbers                                                                                        |
+| `showCopySelectionWithContext`          | boolean | `true`  | Enable Copy Selection with File Path and Line Range                                                                               |
+| `showCopyFileContentWithDiagnostics`   | boolean | `true`  | Enable Copy File Content with VS Code Diagnostics                                                                                 |
+| `showCopyMultipleFilesContent`          | boolean | `true`  | Enable Copy Multiple Selected Files (concatenated)                                                                                |
 | `showInClipsterSubmenu`                 | boolean | `true`  | Declared in `package.json` but has no effect – not read by `extension.ts` or referenced in menu `when` clauses (see Known Issues) |
 | `additionalIgnores`                     | array   | `[]`    | Extra glob patterns to ignore when scanning                                                                                       |
 | `maxRootFiles`                          | integer | `10`    | Max files for root-folder copy-with-content                                                                                       |
