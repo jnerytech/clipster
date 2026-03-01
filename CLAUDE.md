@@ -57,6 +57,7 @@ All source files use **TypeScript** (`ES2020` target) and are compiled to Common
 | `clipster.copySelectionWithContext`          | Copy Selection with File Context       |
 | `clipster.copyFileContentWithDiagnostics`    | Copy File Content with Diagnostics     |
 | `clipster.copyMultipleFilesContent`          | Copy Multiple Files (Concatenated)     |
+| `clipster.copyFolderFilesWithLineNumbers`    | Copy All Files with Line Numbers       |
 
 All commands are surfaced under a **Clipster** submenu in the Explorer context menu. Each command is conditionally registered via `registerConditionalCommand()` based on its corresponding `clipster.*` boolean setting.
 

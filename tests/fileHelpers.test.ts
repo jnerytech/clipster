@@ -9,6 +9,7 @@ import {
   getFolderStructureAndContent,
   copyRootFolderStructureAndContent,
   copyFileContentWithPath,
+  copyFolderFilesWithLineNumbers,
   createFileOrFolderFromClipboard,
 } from "../src/fileHelpers";
 
@@ -390,6 +391,95 @@ describe("fileHelpers", () => {
       // mkdirSync called for parent dirs + folder
       expect(mockFs.mkdirSync).toHaveBeenCalled();
       expect(mockFs.writeFileSync).toHaveBeenCalled();
+    });
+  });
+
+  // ─── copyFolderFilesWithLineNumbers ───────────────────────────────────────────
+
+  describe("copyFolderFilesWithLineNumbers", () => {
+    const folderUri = { fsPath: "/mock/workspace/src" } as vscode.Uri;
+
+    it("copies a single file with line numbers to clipboard", async () => {
+      (mockFs.readdirSync as jest.Mock).mockReturnValue([dirent("index.ts")]);
+      mockFs.statSync.mockReturnValue({
+        isFile: () => true,
+        isDirectory: () => false,
+        size: 50,
+      } as unknown as fs.Stats);
+      (mockFs.readFileSync as jest.Mock).mockReturnValue("line one\nline two");
+      await copyFolderFilesWithLineNumbers(folderUri);
+      const written = (vscode.env.clipboard.writeText as jest.Mock).mock.calls[0][0] as string;
+      expect(written).toContain("index.ts");
+      expect(written).toContain("1 | line one");
+      expect(written).toContain("2 | line two");
+    });
+
+    it("shows information message with file count", async () => {
+      (mockFs.readdirSync as jest.Mock).mockReturnValue([dirent("a.ts")]);
+      mockFs.statSync.mockReturnValue({
+        isFile: () => true,
+        isDirectory: () => false,
+        size: 10,
+      } as unknown as fs.Stats);
+      (mockFs.readFileSync as jest.Mock).mockReturnValue("x");
+      await copyFolderFilesWithLineNumbers(folderUri);
+      expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
+        "1 file(s) copied with line numbers."
+      );
+    });
+
+    it("recurses into subdirectories", async () => {
+      (mockFs.readdirSync as jest.Mock).mockImplementation((p: unknown) => {
+        if (String(p) === "/mock/workspace/src") return [dirent("sub")];
+        return [dirent("nested.ts")];
+      });
+      (mockFs.statSync as jest.Mock).mockImplementation((p: unknown) => ({
+        isFile: () => !String(p).endsWith("sub"),
+        isDirectory: () => String(p).endsWith("sub"),
+        size: 10,
+      }));
+      (mockFs.readFileSync as jest.Mock).mockReturnValue("content");
+      await copyFolderFilesWithLineNumbers(folderUri);
+      const written = (vscode.env.clipboard.writeText as jest.Mock).mock.calls[0][0] as string;
+      expect(written).toContain("nested.ts");
+    });
+
+    it("shows warning and stops when size limit is exceeded", async () => {
+      // First file (300 KB) fits; second pushes total over the 500 KB default limit
+      (mockFs.readdirSync as jest.Mock).mockReturnValue([dirent("big0.ts"), dirent("big1.ts")]);
+      mockFs.statSync.mockReturnValue({
+        isFile: () => true,
+        isDirectory: () => false,
+        size: 300 * 1024,
+      } as unknown as fs.Stats);
+      (mockFs.readFileSync as jest.Mock).mockReturnValue("x");
+      await copyFolderFilesWithLineNumbers(folderUri);
+      expect(vscode.window.showWarningMessage).toHaveBeenCalled();
+      const written = (vscode.env.clipboard.writeText as jest.Mock).mock.calls[0][0] as string;
+      expect(written).toContain("big0.ts");
+      expect(written).not.toContain("big1.ts");
+    });
+
+    it("shows warning when no files are found", async () => {
+      (mockFs.readdirSync as jest.Mock).mockReturnValue([]);
+      await copyFolderFilesWithLineNumbers(folderUri);
+      expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
+        "No files found or total size exceeds limit."
+      );
+      expect(vscode.env.clipboard.writeText).not.toHaveBeenCalled();
+    });
+
+    it("shows error when clipboard write fails", async () => {
+      (mockFs.readdirSync as jest.Mock).mockReturnValue([dirent("a.ts")]);
+      mockFs.statSync.mockReturnValue({
+        isFile: () => true,
+        isDirectory: () => false,
+        size: 10,
+      } as unknown as fs.Stats);
+      (mockFs.readFileSync as jest.Mock).mockReturnValue("x");
+      (vscode.env.clipboard.writeText as jest.Mock).mockRejectedValue(new Error("write failed"));
+      await copyFolderFilesWithLineNumbers(folderUri);
+      expect(vscode.window.showErrorMessage).toHaveBeenCalled();
     });
   });
 });
