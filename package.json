@@ -134,6 +134,11 @@
           "default": true,
           "description": "Enable Copy Multiple Selected Files (concatenated)."
         },
+        "clipster.showCopyFolderFilesWithLineNumbers": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Copy All Files with Line Numbers for folders."
+        },
         "clipster.showInClipsterSubmenu": {
           "type": "boolean",
           "default": true,
@@ -224,6 +229,10 @@
       {
         "command": "clipster.copyMultipleFilesContent",
         "title": "Copy Multiple Files (Concatenated)"
+      },
+      {
+        "command": "clipster.copyFolderFilesWithLineNumbers",
+        "title": "Copy All Files with Line Numbers"
       }
     ],
     "submenus": [
@@ -291,6 +300,11 @@
           "command": "clipster.copyMultipleFilesContent",
           "group": "2_copy",
           "when": "!explorerResourceIsFolder"
+        },
+        {
+          "command": "clipster.copyFolderFilesWithLineNumbers",
+          "group": "2_copy",
+          "when": "explorerResourceIsFolder"
         }
       ],
       "editor/context": [

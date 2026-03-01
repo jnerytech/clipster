@@ -370,6 +370,101 @@ export const copyFileContentWithLineNumbers = async (uris: vscode.Uri[]): Promis
 };
 
 /**
+ * Recursively collects all files under a folder, renders each with line numbers,
+ * and writes the combined result to the clipboard.
+ */
+export const copyFolderFilesWithLineNumbers = async (
+  uri: vscode.Uri,
+  additionalIgnores: string[] = []
+): Promise<void> => {
+  const dir = uri.fsPath;
+  const config = vscode.workspace.getConfiguration("clipster");
+  const maxSizeKB = config.get<number>("maxRootSizeKB", 500);
+  const maxBytes = maxSizeKB * 1024;
+  const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri?.fsPath ?? dir;
+
+  const parts: string[] = [];
+  let totalSize = 0;
+  let truncated = false;
+
+  const collect = (currentDir: string, filter: Ignore): void => {
+    if (truncated) return;
+    let rawEntries: fs.Dirent[];
+    try {
+      rawEntries = fs.readdirSync(currentDir, { withFileTypes: true });
+    } catch (err) {
+      logger.error(
+        `Unable to read directory: ${currentDir} - ${(err as Error).message}`,
+        "copyFolderFilesWithLineNumbers",
+        __filename
+      );
+      return;
+    }
+
+    const entries = filterIgnoredFiles(
+      currentDir,
+      rawEntries.map((e) => e.name),
+      workspaceRoot,
+      additionalIgnores,
+      filter
+    );
+
+    for (const entry of entries) {
+      if (truncated) return;
+      const entryPath = path.join(currentDir, entry);
+      let stats: fs.Stats;
+      try {
+        stats = fs.statSync(entryPath);
+      } catch {
+        continue;
+      }
+      if (stats.isDirectory()) {
+        collect(entryPath, filter);
+      } else {
+        if (totalSize + stats.size > maxBytes) {
+          truncated = true;
+          return;
+        }
+        const content = readFileContent(entryPath);
+        const lines = content.split("\n");
+        const width = String(lines.length).length;
+        const numbered = lines
+          .map((line, i) => `${String(i + 1).padStart(width)} | ${line}`)
+          .join("\n");
+        parts.push(`File: ${entryPath}${os.EOL}${numbered}`);
+        totalSize += stats.size;
+      }
+    }
+  };
+
+  const filter = buildIgnoreFilter(workspaceRoot, additionalIgnores);
+  collect(dir, filter);
+
+  if (!parts.length) {
+    vscode.window.showWarningMessage("No files found or total size exceeds limit.");
+    return;
+  }
+
+  if (truncated) {
+    vscode.window.showWarningMessage(
+      `Size limit (${maxSizeKB} KB) reached; ${parts.length} file(s) included.`
+    );
+  }
+
+  try {
+    await vscode.env.clipboard.writeText(parts.join(`${os.EOL}${os.EOL}`));
+    vscode.window.showInformationMessage(`${parts.length} file(s) copied with line numbers.`);
+  } catch (err) {
+    vscode.window.showErrorMessage(`Failed to copy files: ${(err as Error).message}`);
+    logger.error(
+      `Failed to copy files: ${(err as Error).message}`,
+      "copyFolderFilesWithLineNumbers",
+      __filename
+    );
+  }
+};
+
+/**
  * Copies the active editor's selected text with the file path and line range as context header.
  */
 export const copySelectionWithContext = async (editor: vscode.TextEditor): Promise<void> => {
