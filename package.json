@@ -65,6 +65,7 @@
     "vscode": "^1.93.0"
   },
   "dependencies": {
+    "commander": "^14.0.3",
     "ignore": "^6.0.2",
     "picomatch": "^4.0.2"
   },
