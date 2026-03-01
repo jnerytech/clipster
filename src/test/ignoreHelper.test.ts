@@ -88,4 +88,23 @@ describe("ignoreHelper – filterIgnoredFiles", () => {
     const result = filterIgnoredFiles("/workspace", files, "/workspace");
     expect(result).toEqual(["file.ts", "other.ts"]);
   });
+
+  it("applies default ignore patterns even without a .gitignore", () => {
+    // No .gitignore present
+    mockFs.existsSync.mockReturnValue(false);
+    mockFs.statSync.mockImplementation(((p: fs.PathLike) => ({
+      isDirectory: () => String(p).includes("node_modules") || String(p).includes("dist"),
+      isFile: () => !String(p).includes("node_modules") && !String(p).includes("dist"),
+    })) as unknown as typeof fs.statSync);
+
+    const defaultIgnores = ["node_modules/", "dist/", "*.log"];
+    const files = ["src", "node_modules", "dist", "app.log", "index.ts"];
+    const result = filterIgnoredFiles("/workspace", files, "/workspace", defaultIgnores);
+
+    expect(result).not.toContain("node_modules");
+    expect(result).not.toContain("dist");
+    expect(result).not.toContain("app.log");
+    expect(result).toContain("src");
+    expect(result).toContain("index.ts");
+  });
 });

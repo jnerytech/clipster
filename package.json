@@ -139,10 +139,26 @@
           "default": true,
           "description": "Show Clipster commands in submenu."
         },
+        "clipster.defaultIgnores": {
+          "type": "array",
+          "default": [
+            "node_modules/",
+            ".git/",
+            "dist/",
+            "build/",
+            "out/",
+            "coverage/",
+            "__pycache__/",
+            ".DS_Store",
+            "Thumbs.db",
+            "*.log"
+          ],
+          "description": "Default ignore patterns applied when copying folder structures. Remove any patterns you want included, or clear the list to disable defaults entirely."
+        },
         "clipster.additionalIgnores": {
           "type": "array",
           "default": [],
-          "description": "Additional file patterns to ignore when copying folder structures."
+          "description": "Extra ignore patterns added on top of defaultIgnores and .gitignore when copying folder structures."
         },
         "clipster.maxRootFiles": {
           "type": "integer",

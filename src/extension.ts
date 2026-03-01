@@ -42,7 +42,9 @@ function registerCommands(): void {
   logger.log("Registering Clipster commands…", MODULE, __filename);
 
   const config = vscode.workspace.getConfiguration("clipster");
+  const defaultIgnores = config.get<string[]>("defaultIgnores", []);
   const additionalIgnores = config.get<string[]>("additionalIgnores", []);
+  const allIgnores = [...defaultIgnores, ...additionalIgnores];
 
   disposables.forEach((d) => d.dispose());
   disposables = [];
@@ -102,7 +104,7 @@ function registerCommands(): void {
       try {
         if (!uri) throw new Error("No URI received for copyFolderStructure");
         const folderPath = isFile(uri.fsPath) ? path.dirname(uri.fsPath) : uri.fsPath;
-        const result = getFolderStructure(folderPath, additionalIgnores);
+        const result = getFolderStructure(folderPath, allIgnores);
         await copyToClipboard(result, "Folder structure copied.");
       } catch (err) {
         vscode.window.showErrorMessage(
@@ -144,7 +146,7 @@ function registerCommands(): void {
 
       try {
         const folderPath = isFile(uri.fsPath) ? path.dirname(uri.fsPath) : uri.fsPath;
-        const result = getFolderStructureAndContent(folderPath, additionalIgnores);
+        const result = getFolderStructureAndContent(folderPath, allIgnores);
         await copyToClipboard(result, "Folder structure and content copied.");
         logger.log(
           "Folder structure and content copied.",
@@ -180,7 +182,7 @@ function registerCommands(): void {
     "showCopyRootFolderStructure",
     async () => {
       try {
-        const result = copyRootFolderStructure(additionalIgnores);
+        const result = copyRootFolderStructure(allIgnores);
         await copyToClipboard(result, "Root folder structure copied.");
       } catch (err) {
         vscode.window.showErrorMessage(
@@ -200,7 +202,7 @@ function registerCommands(): void {
     "showCopyRootFolderStructureAndContent",
     async () => {
       try {
-        const result = copyRootFolderStructureAndContent(additionalIgnores);
+        const result = copyRootFolderStructureAndContent(allIgnores);
         await copyToClipboard(result, "Root folder structure and content copied.");
       } catch (err) {
         vscode.window.showErrorMessage(

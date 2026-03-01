@@ -121,35 +121,39 @@ All test files in `src/test/` are active `.test.ts` files. Note that `jest` must
 
 ## VS Code Settings (`clipster.*`)
 
-| Setting                                 | Type    | Default | Description                                                                                                                       |
-| --------------------------------------- | ------- | ------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `showCreateFileFromClipboard`           | boolean | `true`  | Enable create-from-clipboard command                                                                                              |
-| `showCopyFolderStructure`               | boolean | `true`  | Enable copy folder structure                                                                                                      |
-| `showCopyFolderStructureAndContent`     | boolean | `true`  | Enable copy folder structure + content                                                                                            |
-| `showCopyFileContentWithHeader`         | boolean | `true`  | Enable copy file content with path                                                                                                |
-| `showCopyRootFolderPath`                | boolean | `true`  | Enable copy root folder path                                                                                                      |
-| `showCopyRootFolderStructure`           | boolean | `true`  | Enable copy root folder structure                                                                                                 |
-| `showCopyRootFolderStructureAndContent` | boolean | `true`  | Enable copy root folder structure + content                                                                                       |
-| `showCopyFile`                          | boolean | `true`  | Enable copy file/folder                                                                                                           |
-| `showPasteFile`                         | boolean | `true`  | Enable paste file/folder                                                                                                          |
-| `showCopyFileContents`                  | boolean | `true`  | Enable copying file contents only                                                                                                 |
-| `showCopyFileContentWithLineNumbers`    | boolean | `true`  | Enable Copy File Content with Line Numbers                                                                                        |
-| `showCopySelectionWithContext`          | boolean | `true`  | Enable Copy Selection with File Path and Line Range                                                                               |
-| `showCopyFileContentWithDiagnostics`    | boolean | `true`  | Enable Copy File Content with VS Code Diagnostics                                                                                 |
-| `showCopyMultipleFilesContent`          | boolean | `true`  | Enable Copy Multiple Selected Files (concatenated)                                                                                |
-| `showInClipsterSubmenu`                 | boolean | `true`  | Declared in `package.json` but has no effect – not read by `extension.ts` or referenced in menu `when` clauses (see Known Issues) |
-| `additionalIgnores`                     | array   | `[]`    | Extra glob patterns to ignore when scanning                                                                                       |
-| `maxRootFiles`                          | integer | `10`    | Max files for root-folder copy-with-content                                                                                       |
-| `maxRootSizeKB`                         | integer | `500`   | Max total KB for root-folder copy-with-content                                                                                    |
+| Setting                                 | Type    | Default                                                                                                                 | Description                                                                                                                       |
+| --------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `showCreateFileFromClipboard`           | boolean | `true`                                                                                                                  | Enable create-from-clipboard command                                                                                              |
+| `showCopyFolderStructure`               | boolean | `true`                                                                                                                  | Enable copy folder structure                                                                                                      |
+| `showCopyFolderStructureAndContent`     | boolean | `true`                                                                                                                  | Enable copy folder structure + content                                                                                            |
+| `showCopyFileContentWithHeader`         | boolean | `true`                                                                                                                  | Enable copy file content with path                                                                                                |
+| `showCopyRootFolderPath`                | boolean | `true`                                                                                                                  | Enable copy root folder path                                                                                                      |
+| `showCopyRootFolderStructure`           | boolean | `true`                                                                                                                  | Enable copy root folder structure                                                                                                 |
+| `showCopyRootFolderStructureAndContent` | boolean | `true`                                                                                                                  | Enable copy root folder structure + content                                                                                       |
+| `showCopyFile`                          | boolean | `true`                                                                                                                  | Enable copy file/folder                                                                                                           |
+| `showPasteFile`                         | boolean | `true`                                                                                                                  | Enable paste file/folder                                                                                                          |
+| `showCopyFileContents`                  | boolean | `true`                                                                                                                  | Enable copying file contents only                                                                                                 |
+| `showCopyFileContentWithLineNumbers`    | boolean | `true`                                                                                                                  | Enable Copy File Content with Line Numbers                                                                                        |
+| `showCopySelectionWithContext`          | boolean | `true`                                                                                                                  | Enable Copy Selection with File Path and Line Range                                                                               |
+| `showCopyFileContentWithDiagnostics`    | boolean | `true`                                                                                                                  | Enable Copy File Content with VS Code Diagnostics                                                                                 |
+| `showCopyMultipleFilesContent`          | boolean | `true`                                                                                                                  | Enable Copy Multiple Selected Files (concatenated)                                                                                |
+| `showInClipsterSubmenu`                 | boolean | `true`                                                                                                                  | Declared in `package.json` but has no effect – not read by `extension.ts` or referenced in menu `when` clauses (see Known Issues) |
+| `defaultIgnores`                        | array   | `["node_modules/", ".git/", "dist/", "build/", "out/", "coverage/", "__pycache__/", ".DS_Store", "Thumbs.db", "*.log"]` | Built-in ignore patterns applied even without a `.gitignore`. Users can remove entries or clear the list entirely.                |
+| `additionalIgnores`                     | array   | `[]`                                                                                                                    | Extra patterns added on top of `defaultIgnores` and `.gitignore`                                                                  |
+| `maxRootFiles`                          | integer | `10`                                                                                                                    | Max files for root-folder copy-with-content                                                                                       |
+| `maxRootSizeKB`                         | integer | `500`                                                                                                                   | Max total KB for root-folder copy-with-content                                                                                    |
 
 ---
 
 ## Ignore Handling
 
-`src/ignoreHelper.ts` (`filterIgnoredFiles`) merges:
+`src/ignoreHelper.ts` (`buildIgnoreFilter`) merges patterns in this order:
 
-1. `.gitignore` from the workspace root
-2. `clipster.additionalIgnores` setting
+1. `clipster.defaultIgnores` — built-in patterns (works even without `.gitignore`)
+2. `clipster.additionalIgnores` — user-defined extra patterns
+3. `.gitignore` from the workspace root (if present)
+
+`extension.ts` combines `defaultIgnores` and `additionalIgnores` into `allIgnores` and passes that as the `additionalIgnores` argument to all file-helper functions. This keeps `ignoreHelper.ts` free of VS Code dependencies.
 
 It uses the [`ignore`](https://www.npmjs.com/package/ignore) npm package to apply gitignore-style pattern matching.
 
