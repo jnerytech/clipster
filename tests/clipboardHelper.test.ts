@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { copyToClipboard } from "../clipboardHelper";
+import { copyToClipboard } from "../src/clipboardHelper";
 
 describe("clipboardHelper", () => {
   beforeEach(() => {

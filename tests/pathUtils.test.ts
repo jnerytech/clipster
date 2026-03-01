@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import * as vscode from "vscode";
-import { normalizeClipboardContent, getBaseDirectory, resolveTargetPath } from "../pathUtils";
+import { normalizeClipboardContent, getBaseDirectory, resolveTargetPath } from "../src/pathUtils";
 
 jest.mock("fs");
 

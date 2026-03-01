@@ -1,6 +1,6 @@
 import fs from "fs";
 import * as vscode from "vscode";
-import { traverseDirectory, createDirectoriesRecursively } from "../directoryUtils";
+import { traverseDirectory, createDirectoriesRecursively } from "../src/directoryUtils";
 
 jest.mock("fs");
 

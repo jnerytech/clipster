@@ -1,7 +1,7 @@
 // src/test/logger.test.ts
 // logger.ts detects the test environment via JEST_WORKER_ID and falls back
 // to console — no vscode mock is needed for this test suite.
-import logger from "../logger";
+import logger from "../src/logger";
 
 describe("Logger Module", () => {
   let consoleLogSpy: jest.SpyInstance;

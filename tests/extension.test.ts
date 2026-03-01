@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
-import { activate, deactivate } from "../extension";
+import { activate, deactivate } from "../src/extension";
 
-jest.mock("../fileHelpers", () => ({
+jest.mock("../src/fileHelpers", () => ({
   getFolderStructure: jest.fn(() => "structure"),
   getFolderStructureAndContent: jest.fn(() => "content"),
   copyRootFolderPath: jest.fn(() => "/mock/workspace"),
@@ -11,11 +11,11 @@ jest.mock("../fileHelpers", () => ({
   createFileOrFolderFromClipboard: jest.fn(() => Promise.resolve()),
 }));
 
-jest.mock("../clipboardHelper", () => ({
+jest.mock("../src/clipboardHelper", () => ({
   copyToClipboard: jest.fn(() => Promise.resolve()),
 }));
 
-jest.mock("../fileUtils", () => ({
+jest.mock("../src/fileUtils", () => ({
   copyFileToClipboard: jest.fn(() => Promise.resolve()),
   pasteFileFromClipboard: jest.fn(() => Promise.resolve()),
   isFile: jest.fn(() => false),
@@ -100,10 +100,10 @@ describe("extension", () => {
     it("copyFolderStructure handler copies folder structure", async () => {
       activate(mockContext);
 
-      const { copyToClipboard } = jest.requireMock("../clipboardHelper") as {
+      const { copyToClipboard } = jest.requireMock("../src/clipboardHelper") as {
         copyToClipboard: jest.Mock;
       };
-      const { isFile } = jest.requireMock("../fileUtils") as {
+      const { isFile } = jest.requireMock("../src/fileUtils") as {
         isFile: jest.Mock;
       };
       isFile.mockReturnValue(false);
@@ -125,7 +125,7 @@ describe("extension", () => {
     it("copyRootFolderPath handler copies root folder path", async () => {
       activate(mockContext);
 
-      const { copyToClipboard } = jest.requireMock("../clipboardHelper") as {
+      const { copyToClipboard } = jest.requireMock("../src/clipboardHelper") as {
         copyToClipboard: jest.Mock;
       };
 
@@ -145,7 +145,7 @@ describe("extension", () => {
     it("copyRootFolderStructure handler copies root folder structure", async () => {
       activate(mockContext);
 
-      const { copyToClipboard } = jest.requireMock("../clipboardHelper") as {
+      const { copyToClipboard } = jest.requireMock("../src/clipboardHelper") as {
         copyToClipboard: jest.Mock;
       };
 
@@ -165,7 +165,7 @@ describe("extension", () => {
     it("copyRootFolderStructureAndContent handler copies content", async () => {
       activate(mockContext);
 
-      const { copyToClipboard } = jest.requireMock("../clipboardHelper") as {
+      const { copyToClipboard } = jest.requireMock("../src/clipboardHelper") as {
         copyToClipboard: jest.Mock;
       };
 
@@ -185,10 +185,10 @@ describe("extension", () => {
     it("copyFolderStructureAndContent handler copies folder structure and content", async () => {
       activate(mockContext);
 
-      const { copyToClipboard } = jest.requireMock("../clipboardHelper") as {
+      const { copyToClipboard } = jest.requireMock("../src/clipboardHelper") as {
         copyToClipboard: jest.Mock;
       };
-      const { isFile } = jest.requireMock("../fileUtils") as {
+      const { isFile } = jest.requireMock("../src/fileUtils") as {
         isFile: jest.Mock;
       };
       isFile.mockReturnValue(false);
@@ -209,7 +209,7 @@ describe("extension", () => {
     it("copyFolderStructureAndContent falls back to workspace root when no URI", async () => {
       activate(mockContext);
 
-      const { copyToClipboard } = jest.requireMock("../clipboardHelper") as {
+      const { copyToClipboard } = jest.requireMock("../src/clipboardHelper") as {
         copyToClipboard: jest.Mock;
       };
 
@@ -231,7 +231,7 @@ describe("extension", () => {
       (vscode.env.clipboard.readText as jest.Mock).mockResolvedValue("newfile.ts");
       activate(mockContext);
 
-      const { createFileOrFolderFromClipboard } = jest.requireMock("../fileHelpers") as {
+      const { createFileOrFolderFromClipboard } = jest.requireMock("../src/fileHelpers") as {
         createFileOrFolderFromClipboard: jest.Mock;
       };
 
@@ -268,7 +268,7 @@ describe("extension", () => {
     it("copyFileContentWithHeader handler copies file content", async () => {
       activate(mockContext);
 
-      const { copyFileContentWithPath } = jest.requireMock("../fileHelpers") as {
+      const { copyFileContentWithPath } = jest.requireMock("../src/fileHelpers") as {
         copyFileContentWithPath: jest.Mock;
       };
 
@@ -289,7 +289,7 @@ describe("extension", () => {
     it("copyFile handler copies a file to the clipboard", async () => {
       activate(mockContext);
 
-      const { copyFileToClipboard } = jest.requireMock("../fileUtils") as {
+      const { copyFileToClipboard } = jest.requireMock("../src/fileUtils") as {
         copyFileToClipboard: jest.Mock;
       };
 
@@ -310,7 +310,7 @@ describe("extension", () => {
     it("pasteFile handler pastes a file from the clipboard", async () => {
       activate(mockContext);
 
-      const { pasteFileFromClipboard } = jest.requireMock("../fileUtils") as {
+      const { pasteFileFromClipboard } = jest.requireMock("../src/fileUtils") as {
         pasteFileFromClipboard: jest.Mock;
       };
 
@@ -329,7 +329,7 @@ describe("extension", () => {
     });
 
     it("copyRootFolderPath shows error when root path is empty", async () => {
-      const { copyRootFolderPath } = jest.requireMock("../fileHelpers") as {
+      const { copyRootFolderPath } = jest.requireMock("../src/fileHelpers") as {
         copyRootFolderPath: jest.Mock;
       };
       copyRootFolderPath.mockReturnValue("   ");

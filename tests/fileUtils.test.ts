@@ -1,7 +1,12 @@
 import fs from "fs";
 import path from "path";
 import * as vscode from "vscode";
-import { isFile, readFileContent, copyFileToClipboard, pasteFileFromClipboard } from "../fileUtils";
+import {
+  isFile,
+  readFileContent,
+  copyFileToClipboard,
+  pasteFileFromClipboard,
+} from "../src/fileUtils";
 
 jest.mock("fs");
 
@@ -113,7 +118,7 @@ describe("fileUtils", () => {
       mockFs.copyFileSync.mockReturnValue(undefined);
       const targetUri = { fsPath: dest } as vscode.Uri;
       await pasteFileFromClipboard(targetUri);
-      expect(mockFs.copyFileSync).toHaveBeenCalledWith(src, `${dest}/file.ts`);
+      expect(mockFs.copyFileSync).toHaveBeenCalledWith(src, path.join(dest, "file.ts"));
       expect(vscode.window.showInformationMessage).toHaveBeenCalledWith("File pasted: file.ts");
     });
 

@@ -1,5 +1,5 @@
 import os from "os";
-import { formatStructure, formatRootFolder } from "../structureFormatter";
+import { formatStructure, formatRootFolder } from "../src/structureFormatter";
 
 describe("structureFormatter", () => {
   describe("formatStructure", () => {

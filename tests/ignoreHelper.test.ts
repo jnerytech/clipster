@@ -1,5 +1,5 @@
 import fs from "fs";
-import { filterIgnoredFiles } from "../ignoreHelper";
+import { filterIgnoredFiles } from "../src/ignoreHelper";
 
 jest.mock("fs");
 

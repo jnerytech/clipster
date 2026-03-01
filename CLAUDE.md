@@ -88,11 +88,12 @@ npm run release             # standard-version release
 
 ## Testing
 
-| Tool         | Config                                 |
-| ------------ | -------------------------------------- |
-| Jest 29      | `jest.config.js`                       |
-| ts-jest      | `jest.config.js` (`preset: "ts-jest"`) |
-| VS Code mock | `src/test/__mocks__/vscode.ts`         |
+| Tool          | Config                                 |
+| ------------- | -------------------------------------- |
+| Jest 29       | `jest.config.js`                       |
+| ts-jest       | `jest.config.js` (`preset: "ts-jest"`) |
+| VS Code mock  | `tests/__mocks__/vscode.ts`            |
+| Test tsconfig | `tsconfig.test.json`                   |
 
 ```bash
 npm test             # Run all Jest tests with coverage
@@ -102,7 +103,7 @@ npm run test:failed  # Re-run only previously failing tests
 
 ### Test file status
 
-All test files in `src/test/` are active `.test.ts` files. Note that `jest` must be installed (`npm install`) before tests can run.
+All test files in `tests/` are active `.test.ts` files. Note that `jest` must be installed (`npm install`) before tests can run.
 
 | Test file                    | Coverage area                 |
 | ---------------------------- | ----------------------------- |

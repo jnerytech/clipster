@@ -10,7 +10,7 @@ import {
   copyRootFolderStructureAndContent,
   copyFileContentWithPath,
   createFileOrFolderFromClipboard,
-} from "../fileHelpers";
+} from "../src/fileHelpers";
 
 jest.mock("fs");
 

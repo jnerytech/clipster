@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { showErrorMessage, showInformationMessage, showWarningMessage } from "../messageUtils";
+import { showErrorMessage, showInformationMessage, showWarningMessage } from "../src/messageUtils";
 
 describe("messageUtils", () => {
   beforeEach(() => {
