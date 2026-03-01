@@ -1,6 +1,29 @@
-node_modules/**      # Include only necessary files from node_modules
-dist/**              # Exclude the dist folder
-.git/**              # Exclude the .git folder
-out/clipster.vsix    # Exclude the packaged VSIX file from being packaged again
-*.log                # Exclude log files
-.vscode/**           # Exclude any personal VSCode settings
+# Source & dev files — not needed at runtime
+src/**
+out/**
+.git/**
+.github/**
+.husky/**
+.claude/**
+.vscode/**
+node_modules/**
+
+# Config & tooling files
+tsconfig.json
+webpack.config.cjs
+jest.config.js
+build.js
+.eslintrc*
+.prettierrc*
+.prettierignore
+.editorconfig
+.gitattributes
+.gitignore
+PLAN.md
+CLAUDE.md
+contributes.json
+
+# Keep dist/ — it contains the compiled extension
+!dist/extension.js
+!dist/extension.js.map
+!dist/resources/**

@@ -254,8 +254,7 @@
         },
         {
           "command": "clipster.copyFile",
-          "group": "4_file",
-          "when": "explorerResourceIsFolder || explorerResourceIsFile"
+          "group": "4_file"
         },
         {
           "command": "clipster.pasteFile",
@@ -265,17 +264,17 @@
         {
           "command": "clipster.copyFileContentWithLineNumbers",
           "group": "2_copy",
-          "when": "explorerResourceIsFile"
+          "when": "!explorerResourceIsFolder"
         },
         {
           "command": "clipster.copyFileContentWithDiagnostics",
           "group": "2_copy",
-          "when": "explorerResourceIsFile"
+          "when": "!explorerResourceIsFolder"
         },
         {
           "command": "clipster.copyMultipleFilesContent",
           "group": "2_copy",
-          "when": "explorerResourceIsFile"
+          "when": "!explorerResourceIsFolder"
         }
       ],
       "editor/context": [
