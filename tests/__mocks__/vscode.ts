@@ -26,9 +26,18 @@ const vscode = {
   commands: {
     registerCommand: jest.fn(),
   },
+  languages: {
+    getDiagnostics: jest.fn(() => []),
+  },
   Disposable: jest.fn(),
   Uri: {
     file: jest.fn((p: string) => ({ fsPath: p })),
+  },
+  DiagnosticSeverity: {
+    Error: 0,
+    Warning: 1,
+    Information: 2,
+    Hint: 3,
   },
 };
 

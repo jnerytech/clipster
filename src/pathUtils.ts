@@ -1,8 +1,7 @@
 // src/pathUtils.ts
 import path from "path";
 import fs from "fs";
-import * as vscode from "vscode";
-import { showErrorMessage } from "./messageUtils";
+import { getPlatform } from "./platform";
 
 export const normalizeClipboardContent = (content: string): string => {
   return content.replace(/[/\\]+/g, path.sep);
@@ -13,12 +12,12 @@ export const normalizeClipboardContent = (content: string): string => {
  * right-clicked in the Explorer.  If a file was clicked, returns its parent
  * folder; if a folder was clicked, returns that folder.
  */
-export const getBaseDirectory = (uri: vscode.Uri): string | null => {
+export const getBaseDirectory = (dirPath: string): string | null => {
   try {
-    const stat = fs.statSync(uri.fsPath);
-    return stat.isFile() ? path.dirname(uri.fsPath) : uri.fsPath;
+    const stat = fs.statSync(dirPath);
+    return stat.isFile() ? path.dirname(dirPath) : dirPath;
   } catch (err) {
-    showErrorMessage(
+    getPlatform().message.error(
       `Failed to determine the type of the selected item: ${(err as Error).message}`
     );
     return null;
@@ -41,14 +40,14 @@ export const getBaseDirectory = (uri: vscode.Uri): string | null => {
  * "/etc/shadow" could create or overwrite files outside the workspace.
  */
 export const resolveTargetPath = (clipboardContent: string, baseDir: string): string | null => {
-  const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri?.fsPath;
+  const workspaceRoot = getPlatform().getWorkspaceRoot();
   let resolved: string;
 
   if (path.isAbsolute(clipboardContent)) {
     resolved = path.normalize(clipboardContent);
   } else if (clipboardContent.includes("/") || clipboardContent.includes("\\")) {
     if (!workspaceRoot) {
-      showErrorMessage("No workspace found. Unable to determine relative path.");
+      getPlatform().message.error("No workspace found. Unable to determine relative path.");
       return null;
     }
     resolved = path.normalize(path.join(workspaceRoot, clipboardContent));
@@ -79,13 +78,15 @@ export const resolveTargetPath = (clipboardContent: string, baseDir: string): st
       relative === ".." ||
       relative.startsWith(".." + path.sep)
     ) {
-      showErrorMessage(
+      getPlatform().message.error(
         `Blocked: resolved path escapes the workspace. Only paths within the workspace are allowed.`
       );
       return null;
     }
   } catch (err) {
-    showErrorMessage(`Failed to validate target path confinement: ${(err as Error).message}`);
+    getPlatform().message.error(
+      `Failed to validate target path confinement: ${(err as Error).message}`
+    );
     return null;
   }
 

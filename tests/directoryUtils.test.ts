@@ -1,10 +1,21 @@
 import fs from "fs";
-import * as vscode from "vscode";
 import { traverseDirectory, createDirectoriesRecursively } from "../src/directoryUtils";
+import { initPlatform, Platform } from "../src/platform";
 
 jest.mock("fs");
 
 const mockFs = jest.mocked(fs);
+
+const mockPlatform = {
+  clipboard: {
+    writeText: jest.fn(() => Promise.resolve()),
+    readText: jest.fn(() => Promise.resolve("")),
+  },
+  message: { info: jest.fn(), warn: jest.fn(), error: jest.fn() },
+  getConfig: jest.fn((_key: string, defaultValue: unknown) => defaultValue),
+  getWorkspaceRoot: jest.fn<string | null, []>(() => "/mock/workspace"),
+  getDiagnostics: jest.fn(() => []),
+};
 
 /** Helper to create a minimal Dirent-like object. */
 function makeDirent(name: string): fs.Dirent {
@@ -14,6 +25,7 @@ function makeDirent(name: string): fs.Dirent {
 describe("directoryUtils", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    initPlatform(mockPlatform as unknown as Platform);
     // Default: no .gitignore, all entries are plain files
     mockFs.existsSync.mockReturnValue(false);
     mockFs.statSync.mockReturnValue({
@@ -35,7 +47,7 @@ describe("directoryUtils", () => {
       });
       const result = traverseDirectory("/dir", "/dir");
       expect(result).toBe("");
-      expect(vscode.window.showErrorMessage).toHaveBeenCalled();
+      expect(mockPlatform.message.error).toHaveBeenCalled();
     });
 
     it("lists a single file entry", () => {
@@ -134,7 +146,7 @@ describe("directoryUtils", () => {
       });
       const result = createDirectoriesRecursively("/some/path");
       expect(result).toBe(false);
-      expect(vscode.window.showErrorMessage).toHaveBeenCalled();
+      expect(mockPlatform.message.error).toHaveBeenCalled();
     });
   });
 });
