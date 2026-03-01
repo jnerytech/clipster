@@ -5,6 +5,9 @@ import path from "path";
 import logger from "./logger";
 import { showErrorMessage, showInformationMessage, showWarningMessage } from "./messageUtils";
 
+// Pure utilities re-exported so existing callers of fileUtils keep working.
+export { isFile, readFileContent } from "./fileContent";
+
 export const openFileInEditor = async (filePath: string): Promise<void> => {
   try {
     const document = await vscode.workspace.openTextDocument(filePath);
@@ -17,19 +20,6 @@ export const openFileInEditor = async (filePath: string): Promise<void> => {
       "fileUtils",
       __filename
     );
-  }
-};
-
-/**
- * Returns true when `filePath` points to an existing file (not a directory).
- * Uses a single statSync call with a try/catch — existsSync + statSync is
- * redundant because statSync already throws when the path doesn't exist.
- */
-export const isFile = (filePath: string): boolean => {
-  try {
-    return fs.statSync(filePath).isFile();
-  } catch {
-    return false;
   }
 };
 
@@ -135,21 +125,5 @@ export const pasteFileFromClipboard = async (targetUri: vscode.Uri): Promise<voi
   } catch (err) {
     showErrorMessage(`Failed to paste file: ${(err as Error).message}`);
     logger.error(`Failed to paste file: ${(err as Error).message}`, "fileUtils", __filename);
-  }
-};
-
-export const readFileContent = (filePath: string): string => {
-  try {
-    const content = fs.readFileSync(filePath, "utf-8");
-    logger.log(`Read file content: ${filePath}`, "fileUtils", __filename);
-    return content;
-  } catch (err) {
-    showErrorMessage(`Failed to read file: ${(err as Error).message}`);
-    logger.error(
-      `Failed to read file: ${filePath} - ${(err as Error).message}`,
-      "fileUtils",
-      __filename
-    );
-    return "";
   }
 };

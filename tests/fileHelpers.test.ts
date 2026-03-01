@@ -1,5 +1,5 @@
 import fs from "fs";
-import * as vscode from "vscode";
+import { initPlatform, Platform, DiagnosticItem, DiagnosticSeverity } from "../src/platform";
 import {
   isFolder,
   isValidPath,
@@ -18,6 +18,22 @@ jest.mock("fs");
 
 const mockFs = jest.mocked(fs);
 
+// Mock platform — used by all platform-based functions in fileHelpers.ts
+const mockPlatform = {
+  clipboard: {
+    writeText: jest.fn(() => Promise.resolve()),
+    readText: jest.fn(() => Promise.resolve("")),
+  },
+  message: {
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  },
+  getConfig: jest.fn((_key: string, defaultValue: unknown) => defaultValue),
+  getWorkspaceRoot: jest.fn<string | null, []>(() => "/mock/workspace"),
+  getDiagnostics: jest.fn<DiagnosticItem[], [string]>(() => []),
+};
+
 /** Minimal Dirent factory. */
 function dirent(name: string): fs.Dirent {
   return { name, isDirectory: () => false, isSymbolicLink: () => false } as unknown as fs.Dirent;
@@ -26,11 +42,11 @@ function dirent(name: string): fs.Dirent {
 describe("fileHelpers", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (
-      vscode.workspace as unknown as { workspaceFolders: { uri: { fsPath: string } }[] }
-    ).workspaceFolders = [{ uri: { fsPath: "/mock/workspace" } }];
+    initPlatform(mockPlatform as unknown as Platform);
+    mockPlatform.getWorkspaceRoot.mockReturnValue("/mock/workspace");
+    mockPlatform.clipboard.writeText.mockResolvedValue(undefined);
+    mockPlatform.getDiagnostics.mockReturnValue([]);
     mockFs.existsSync.mockReturnValue(false); // no .gitignore by default
-    (vscode.env.clipboard.writeText as jest.Mock).mockResolvedValue(undefined);
     // resolveTargetPath uses realpathSync for confinement checks; behave as identity in tests
     (mockFs.realpathSync as unknown as jest.Mock).mockImplementation((p: string) => p);
   });
@@ -97,14 +113,10 @@ describe("fileHelpers", () => {
     });
 
     it("shows error and returns empty string when no workspace is open", () => {
-      (
-        vscode.workspace as {
-          workspaceFolders: { uri: { fsPath: string } }[] | undefined;
-        }
-      ).workspaceFolders = undefined;
+      mockPlatform.getWorkspaceRoot.mockReturnValue(null);
       const result = copyRootFolderPath();
       expect(result).toBe("");
-      expect(vscode.window.showErrorMessage).toHaveBeenCalled();
+      expect(mockPlatform.message.error).toHaveBeenCalled();
     });
   });
 
@@ -120,11 +132,7 @@ describe("fileHelpers", () => {
     });
 
     it("returns 'No workspace open' when there is no workspace", () => {
-      (
-        vscode.workspace as {
-          workspaceFolders: { uri: { fsPath: string } }[] | undefined;
-        }
-      ).workspaceFolders = undefined;
+      mockPlatform.getWorkspaceRoot.mockReturnValue(null);
       const result = getFolderStructure("/any/dir");
       expect(result).toBe("No workspace open");
     });
@@ -145,11 +153,7 @@ describe("fileHelpers", () => {
 
   describe("copyRootFolderStructure", () => {
     it("returns 'No workspace root found.' when there is no workspace", () => {
-      (
-        vscode.workspace as {
-          workspaceFolders: { uri: { fsPath: string } }[] | undefined;
-        }
-      ).workspaceFolders = undefined;
+      mockPlatform.getWorkspaceRoot.mockReturnValue(null);
       const result = copyRootFolderStructure();
       expect(result).toBe("No workspace root found.");
     });
@@ -230,11 +234,7 @@ describe("fileHelpers", () => {
 
   describe("copyRootFolderStructureAndContent", () => {
     it("returns error message when no workspace is open", () => {
-      (
-        vscode.workspace as {
-          workspaceFolders: { uri: { fsPath: string } }[] | undefined;
-        }
-      ).workspaceFolders = undefined;
+      mockPlatform.getWorkspaceRoot.mockReturnValue(null);
       const result = copyRootFolderStructureAndContent();
       expect(result).toBe("No workspace root found.");
     });
@@ -263,7 +263,7 @@ describe("fileHelpers", () => {
       } as unknown as fs.Stats);
       (mockFs.readFileSync as jest.Mock).mockReturnValue("x");
       copyRootFolderStructureAndContent();
-      expect(vscode.window.showWarningMessage).toHaveBeenCalled();
+      expect(mockPlatform.message.warn).toHaveBeenCalled();
     });
   });
 
@@ -281,9 +281,8 @@ describe("fileHelpers", () => {
     it("copies single file content with path to clipboard", async () => {
       mockFs.statSync.mockReturnValue(fileStats);
       (mockFs.readFileSync as jest.Mock).mockReturnValue("file content");
-      const uris = [{ fsPath: "/workspace/src/index.ts" } as vscode.Uri];
-      await copyFileContentWithPath(uris);
-      const written = (vscode.env.clipboard.writeText as jest.Mock).mock.calls[0][0] as string;
+      await copyFileContentWithPath(["/workspace/src/index.ts"]);
+      const written = (mockPlatform.clipboard.writeText as jest.Mock).mock.calls[0][0] as string;
       expect(written).toContain("/workspace/src/index.ts");
       expect(written).toContain("file content");
     });
@@ -291,20 +290,16 @@ describe("fileHelpers", () => {
     it("shows information message with file count", async () => {
       mockFs.statSync.mockReturnValue(fileStats);
       (mockFs.readFileSync as jest.Mock).mockReturnValue("content");
-      const uris = [{ fsPath: "/a.ts" } as vscode.Uri, { fsPath: "/b.ts" } as vscode.Uri];
-      await copyFileContentWithPath(uris);
-      expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
-        "2 file(s) copied with paths."
-      );
+      await copyFileContentWithPath(["/a.ts", "/b.ts"]);
+      expect(mockPlatform.message.info).toHaveBeenCalledWith("2 file(s) copied with paths.");
     });
 
     it("shows error when clipboard write fails", async () => {
       mockFs.statSync.mockReturnValue(fileStats);
       (mockFs.readFileSync as jest.Mock).mockReturnValue("content");
-      (vscode.env.clipboard.writeText as jest.Mock).mockRejectedValue(new Error("clipboard error"));
-      const uris = [{ fsPath: "/a.ts" } as vscode.Uri];
-      await copyFileContentWithPath(uris);
-      expect(vscode.window.showErrorMessage).toHaveBeenCalled();
+      mockPlatform.clipboard.writeText.mockRejectedValue(new Error("clipboard error"));
+      await copyFileContentWithPath(["/a.ts"]);
+      expect(mockPlatform.message.error).toHaveBeenCalled();
     });
 
     // BUG-6 fix: files exceeding the size limit must be truncated with a warning
@@ -316,20 +311,21 @@ describe("fileHelpers", () => {
         size: 400 * 1024,
       } as unknown as fs.Stats);
       (mockFs.readFileSync as jest.Mock).mockReturnValue("x");
-      const uris = [{ fsPath: "/a.ts" } as vscode.Uri, { fsPath: "/b.ts" } as vscode.Uri];
-      await copyFileContentWithPath(uris);
-      expect(vscode.window.showWarningMessage).toHaveBeenCalled();
+      await copyFileContentWithPath(["/a.ts", "/b.ts"]);
+      expect(mockPlatform.message.warn).toHaveBeenCalled();
       // Only the first file (400 KB) should have been written
-      const written = (vscode.env.clipboard.writeText as jest.Mock).mock.calls[0][0] as string;
+      const written = (mockPlatform.clipboard.writeText as jest.Mock).mock.calls[0][0] as string;
       expect(written).toContain("/a.ts");
       expect(written).not.toContain("/b.ts");
     });
   });
 
   // ─── createFileOrFolderFromClipboard ──────────────────────────────────────────
+  // Note: this function uses messageUtils (which wraps vscode) for user messages,
+  // so assertions still target the vscode window mock.
 
   describe("createFileOrFolderFromClipboard", () => {
-    const baseUri = { fsPath: "/mock/workspace" } as vscode.Uri;
+    const basePath = "/mock/workspace";
 
     beforeEach(() => {
       mockFs.statSync.mockReturnValue({
@@ -341,37 +337,37 @@ describe("fileHelpers", () => {
     });
 
     it("creates a file from clipboard content", async () => {
-      await createFileOrFolderFromClipboard("newfile.ts", baseUri);
+      await createFileOrFolderFromClipboard("newfile.ts", basePath);
       expect(mockFs.writeFileSync).toHaveBeenCalled();
-      expect(vscode.window.showInformationMessage).toHaveBeenCalled();
+      expect(mockPlatform.message.info).toHaveBeenCalled();
     });
 
     it("creates a folder when the line ends with '/'", async () => {
-      await createFileOrFolderFromClipboard("newfolder/", baseUri);
+      await createFileOrFolderFromClipboard("newfolder/", basePath);
       expect(mockFs.mkdirSync).toHaveBeenCalled();
     });
 
     it("creates a folder when the line ends with backslash", async () => {
-      await createFileOrFolderFromClipboard("newfolder\\", baseUri);
+      await createFileOrFolderFromClipboard("newfolder\\", basePath);
       expect(mockFs.mkdirSync).toHaveBeenCalled();
     });
 
     it("shows error message when clipboard content is empty", async () => {
-      await createFileOrFolderFromClipboard("", baseUri);
-      expect(vscode.window.showErrorMessage).toHaveBeenCalled();
+      await createFileOrFolderFromClipboard("", basePath);
+      expect(mockPlatform.message.error).toHaveBeenCalled();
     });
 
     it("shows error message when base directory cannot be determined", async () => {
       mockFs.statSync.mockImplementation(() => {
         throw new Error("ENOENT");
       });
-      await createFileOrFolderFromClipboard("file.ts", baseUri);
-      expect(vscode.window.showErrorMessage).toHaveBeenCalled();
+      await createFileOrFolderFromClipboard("file.ts", basePath);
+      expect(mockPlatform.message.error).toHaveBeenCalled();
     });
 
     it("reports errors in summary for invalid paths", async () => {
-      await createFileOrFolderFromClipboard("bad\x00file.ts", baseUri);
-      expect(vscode.window.showErrorMessage).toHaveBeenCalled();
+      await createFileOrFolderFromClipboard("bad\x00file.ts", basePath);
+      expect(mockPlatform.message.error).toHaveBeenCalled();
     });
 
     it("reports errors for paths that fail to create", async () => {
@@ -382,13 +378,13 @@ describe("fileHelpers", () => {
       mockFs.writeFileSync.mockImplementation(() => {
         throw new Error("Permission denied");
       });
-      await createFileOrFolderFromClipboard("file.ts", baseUri);
+      await createFileOrFolderFromClipboard("file.ts", basePath);
       // summary message should still show
-      expect(vscode.window.showInformationMessage).toHaveBeenCalled();
+      expect(mockPlatform.message.info).toHaveBeenCalled();
     });
 
     it("processes multiple lines creating mixed files and folders", async () => {
-      await createFileOrFolderFromClipboard("a.ts\nb.ts\nfolder/", baseUri);
+      await createFileOrFolderFromClipboard("a.ts\nb.ts\nfolder/", basePath);
       // mkdirSync called for parent dirs + folder
       expect(mockFs.mkdirSync).toHaveBeenCalled();
       expect(mockFs.writeFileSync).toHaveBeenCalled();
@@ -398,7 +394,7 @@ describe("fileHelpers", () => {
   // ─── copyFolderFilesWithLineNumbers ───────────────────────────────────────────
 
   describe("copyFolderFilesWithLineNumbers", () => {
-    const folderUri = { fsPath: "/mock/workspace/src" } as vscode.Uri;
+    const folderPath = "/mock/workspace/src";
 
     it("copies a single file with line numbers to clipboard", async () => {
       (mockFs.readdirSync as jest.Mock).mockReturnValue([dirent("index.ts")]);
@@ -408,8 +404,8 @@ describe("fileHelpers", () => {
         size: 50,
       } as unknown as fs.Stats);
       (mockFs.readFileSync as jest.Mock).mockReturnValue("line one\nline two");
-      await copyFolderFilesWithLineNumbers(folderUri);
-      const written = (vscode.env.clipboard.writeText as jest.Mock).mock.calls[0][0] as string;
+      await copyFolderFilesWithLineNumbers(folderPath);
+      const written = (mockPlatform.clipboard.writeText as jest.Mock).mock.calls[0][0] as string;
       expect(written).toContain("index.ts");
       expect(written).toContain("1 | line one");
       expect(written).toContain("2 | line two");
@@ -423,15 +419,13 @@ describe("fileHelpers", () => {
         size: 10,
       } as unknown as fs.Stats);
       (mockFs.readFileSync as jest.Mock).mockReturnValue("x");
-      await copyFolderFilesWithLineNumbers(folderUri);
-      expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
-        "1 file(s) copied with line numbers."
-      );
+      await copyFolderFilesWithLineNumbers(folderPath);
+      expect(mockPlatform.message.info).toHaveBeenCalledWith("1 file(s) copied with line numbers.");
     });
 
     it("recurses into subdirectories", async () => {
       (mockFs.readdirSync as jest.Mock).mockImplementation((p: unknown) => {
-        if (String(p) === "/mock/workspace/src") return [dirent("sub")];
+        if (String(p) === folderPath) return [dirent("sub")];
         return [dirent("nested.ts")];
       });
       (mockFs.statSync as jest.Mock).mockImplementation((p: unknown) => ({
@@ -440,8 +434,8 @@ describe("fileHelpers", () => {
         size: 10,
       }));
       (mockFs.readFileSync as jest.Mock).mockReturnValue("content");
-      await copyFolderFilesWithLineNumbers(folderUri);
-      const written = (vscode.env.clipboard.writeText as jest.Mock).mock.calls[0][0] as string;
+      await copyFolderFilesWithLineNumbers(folderPath);
+      const written = (mockPlatform.clipboard.writeText as jest.Mock).mock.calls[0][0] as string;
       expect(written).toContain("nested.ts");
     });
 
@@ -454,20 +448,20 @@ describe("fileHelpers", () => {
         size: 300 * 1024,
       } as unknown as fs.Stats);
       (mockFs.readFileSync as jest.Mock).mockReturnValue("x");
-      await copyFolderFilesWithLineNumbers(folderUri);
-      expect(vscode.window.showWarningMessage).toHaveBeenCalled();
-      const written = (vscode.env.clipboard.writeText as jest.Mock).mock.calls[0][0] as string;
+      await copyFolderFilesWithLineNumbers(folderPath);
+      expect(mockPlatform.message.warn).toHaveBeenCalled();
+      const written = (mockPlatform.clipboard.writeText as jest.Mock).mock.calls[0][0] as string;
       expect(written).toContain("big0.ts");
       expect(written).not.toContain("big1.ts");
     });
 
     it("shows warning when no files are found", async () => {
       (mockFs.readdirSync as jest.Mock).mockReturnValue([]);
-      await copyFolderFilesWithLineNumbers(folderUri);
-      expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
+      await copyFolderFilesWithLineNumbers(folderPath);
+      expect(mockPlatform.message.warn).toHaveBeenCalledWith(
         "No files found or total size exceeds limit."
       );
-      expect(vscode.env.clipboard.writeText).not.toHaveBeenCalled();
+      expect(mockPlatform.clipboard.writeText).not.toHaveBeenCalled();
     });
 
     it("shows error when clipboard write fails", async () => {
@@ -478,16 +472,16 @@ describe("fileHelpers", () => {
         size: 10,
       } as unknown as fs.Stats);
       (mockFs.readFileSync as jest.Mock).mockReturnValue("x");
-      (vscode.env.clipboard.writeText as jest.Mock).mockRejectedValue(new Error("write failed"));
-      await copyFolderFilesWithLineNumbers(folderUri);
-      expect(vscode.window.showErrorMessage).toHaveBeenCalled();
+      mockPlatform.clipboard.writeText.mockRejectedValue(new Error("write failed"));
+      await copyFolderFilesWithLineNumbers(folderPath);
+      expect(mockPlatform.message.error).toHaveBeenCalled();
     });
   });
 
   // ─── copyFolderFilesWithDiagnostics ───────────────────────────────────────────
 
   describe("copyFolderFilesWithDiagnostics", () => {
-    const folderUri = { fsPath: "/mock/workspace/src" } as vscode.Uri;
+    const folderPath = "/mock/workspace/src";
 
     it("copies a file with content and 'Diagnostics: none' when no issues", async () => {
       (mockFs.readdirSync as jest.Mock).mockReturnValue([dirent("index.ts")]);
@@ -497,9 +491,9 @@ describe("fileHelpers", () => {
         size: 50,
       } as unknown as fs.Stats);
       (mockFs.readFileSync as jest.Mock).mockReturnValue("const x = 1;");
-      (vscode.languages.getDiagnostics as jest.Mock).mockReturnValue([]);
-      await copyFolderFilesWithDiagnostics(folderUri);
-      const written = (vscode.env.clipboard.writeText as jest.Mock).mock.calls[0][0] as string;
+      mockPlatform.getDiagnostics.mockReturnValue([]);
+      await copyFolderFilesWithDiagnostics(folderPath);
+      const written = (mockPlatform.clipboard.writeText as jest.Mock).mock.calls[0][0] as string;
       expect(written).toContain("index.ts");
       expect(written).toContain("Diagnostics: none");
     });
@@ -512,17 +506,17 @@ describe("fileHelpers", () => {
         size: 50,
       } as unknown as fs.Stats);
       (mockFs.readFileSync as jest.Mock).mockReturnValue("bad code");
-      (vscode.languages.getDiagnostics as jest.Mock).mockReturnValue([
+      mockPlatform.getDiagnostics.mockReturnValue([
         {
           range: { start: { line: 4 } },
-          severity: 0, // Error
+          severity: DiagnosticSeverity.Error,
           message: "Cannot find name 'foo'",
           code: "TS2304",
           source: "ts",
         },
       ]);
-      await copyFolderFilesWithDiagnostics(folderUri);
-      const written = (vscode.env.clipboard.writeText as jest.Mock).mock.calls[0][0] as string;
+      await copyFolderFilesWithDiagnostics(folderPath);
+      const written = (mockPlatform.clipboard.writeText as jest.Mock).mock.calls[0][0] as string;
       expect(written).toContain("Diagnostics (1 issue):");
       expect(written).toContain("Line 5");
       expect(written).toContain("ERROR");
@@ -537,11 +531,9 @@ describe("fileHelpers", () => {
         size: 10,
       } as unknown as fs.Stats);
       (mockFs.readFileSync as jest.Mock).mockReturnValue("x");
-      (vscode.languages.getDiagnostics as jest.Mock).mockReturnValue([]);
-      await copyFolderFilesWithDiagnostics(folderUri);
-      expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(
-        "1 file(s) copied with diagnostics."
-      );
+      mockPlatform.getDiagnostics.mockReturnValue([]);
+      await copyFolderFilesWithDiagnostics(folderPath);
+      expect(mockPlatform.message.info).toHaveBeenCalledWith("1 file(s) copied with diagnostics.");
     });
 
     it("shows warning and stops when size limit is exceeded", async () => {
@@ -552,21 +544,21 @@ describe("fileHelpers", () => {
         size: 300 * 1024,
       } as unknown as fs.Stats);
       (mockFs.readFileSync as jest.Mock).mockReturnValue("x");
-      (vscode.languages.getDiagnostics as jest.Mock).mockReturnValue([]);
-      await copyFolderFilesWithDiagnostics(folderUri);
-      expect(vscode.window.showWarningMessage).toHaveBeenCalled();
-      const written = (vscode.env.clipboard.writeText as jest.Mock).mock.calls[0][0] as string;
+      mockPlatform.getDiagnostics.mockReturnValue([]);
+      await copyFolderFilesWithDiagnostics(folderPath);
+      expect(mockPlatform.message.warn).toHaveBeenCalled();
+      const written = (mockPlatform.clipboard.writeText as jest.Mock).mock.calls[0][0] as string;
       expect(written).toContain("big0.ts");
       expect(written).not.toContain("big1.ts");
     });
 
     it("shows warning when no files are found", async () => {
       (mockFs.readdirSync as jest.Mock).mockReturnValue([]);
-      await copyFolderFilesWithDiagnostics(folderUri);
-      expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
+      await copyFolderFilesWithDiagnostics(folderPath);
+      expect(mockPlatform.message.warn).toHaveBeenCalledWith(
         "No files found or total size exceeds limit."
       );
-      expect(vscode.env.clipboard.writeText).not.toHaveBeenCalled();
+      expect(mockPlatform.clipboard.writeText).not.toHaveBeenCalled();
     });
 
     it("shows error when clipboard write fails", async () => {
@@ -577,10 +569,10 @@ describe("fileHelpers", () => {
         size: 10,
       } as unknown as fs.Stats);
       (mockFs.readFileSync as jest.Mock).mockReturnValue("x");
-      (vscode.languages.getDiagnostics as jest.Mock).mockReturnValue([]);
-      (vscode.env.clipboard.writeText as jest.Mock).mockRejectedValue(new Error("write failed"));
-      await copyFolderFilesWithDiagnostics(folderUri);
-      expect(vscode.window.showErrorMessage).toHaveBeenCalled();
+      mockPlatform.getDiagnostics.mockReturnValue([]);
+      mockPlatform.clipboard.writeText.mockRejectedValue(new Error("write failed"));
+      await copyFolderFilesWithDiagnostics(folderPath);
+      expect(mockPlatform.message.error).toHaveBeenCalled();
     });
   });
 });

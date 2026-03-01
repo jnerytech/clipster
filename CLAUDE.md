@@ -15,18 +15,23 @@
 
 ### Source files (`src/`)
 
-| File                    | Role                                                                                                   |
-| ----------------------- | ------------------------------------------------------------------------------------------------------ |
-| `extension.ts`          | VS Code extension entry point – registers all commands via `activate()`, re-registers on config change |
-| `fileHelpers.ts`        | Core logic: folder structure, file content, create-from-clipboard operations                           |
-| `ignoreHelper.ts`       | Filters files using `.gitignore` + `clipster.additionalIgnores` (uses `ignore` package)                |
-| `clipboardHelper.ts`    | Thin wrapper around `vscode.env.clipboard.writeText`                                                   |
-| `fileUtils.ts`          | `isFile`, `readFileContent`, copy/paste file helpers                                                   |
-| `directoryUtils.ts`     | Recursive directory traversal                                                                          |
-| `structureFormatter.ts` | Formats root-folder header for clipboard output                                                        |
-| `pathUtils.ts`          | `getBaseDirectory`, `resolveTargetPath` helpers                                                        |
-| `messageUtils.ts`       | Wraps `vscode.window.showErrorMessage` / `showInformationMessage`                                      |
-| `logger.ts`             | Lightweight logger that writes to a VS Code Output Channel                                             |
+| File                           | Role                                                                                                          |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| `extension.ts`                 | VS Code extension entry point – registers all commands via `activate()`, re-registers on config change        |
+| `platform.ts`                  | `Platform` interface + `initPlatform`/`getPlatform` singleton — decouples core logic from VS Code             |
+| `platforms/vscode-platform.ts` | VS Code `Platform` implementation (wraps vscode APIs)                                                         |
+| `platforms/cli-platform.ts`    | CLI `Platform` implementation (stdout clipboard, stderr messages, `process.cwd()` workspace root)             |
+| `cli.ts`                       | CLI entry point — parses `process.argv` and calls core fileHelpers functions                                  |
+| `fileHelpers.ts`               | Core logic: folder structure, file content, create-from-clipboard operations — **zero vscode import**         |
+| `fileContent.ts`               | Pure `readFileContent` + `isFile` helpers — no vscode dependency, safe for CLI                                |
+| `ignoreHelper.ts`              | Filters files using `.gitignore` + `clipster.additionalIgnores` (uses `ignore` package)                       |
+| `clipboardHelper.ts`           | Thin wrapper around `vscode.env.clipboard.writeText` (VS Code only)                                           |
+| `fileUtils.ts`                 | VS Code-specific file ops (`copyFileToClipboard`, `pasteFileFromClipboard`); re-exports from `fileContent.ts` |
+| `directoryUtils.ts`            | Recursive directory traversal — uses `getPlatform()` for error messages                                       |
+| `structureFormatter.ts`        | Formats root-folder header for clipboard output                                                               |
+| `pathUtils.ts`                 | `getBaseDirectory`, `resolveTargetPath` helpers — uses `getPlatform()` for messages                           |
+| `messageUtils.ts`              | Wraps `vscode.window.showErrorMessage` / `showInformationMessage` (VS Code only, not used by core)            |
+| `logger.ts`                    | Lightweight logger that writes to a VS Code Output Channel (falls back to `console` in CLI)                   |
 
 ### Module system note
 
@@ -78,12 +83,30 @@ All commands are surfaced under a **Clipster** submenu in the Explorer context m
 ```bash
 npm run type-check          # Type-check only (tsc --noEmit)
 npm run build               # Type-check + production Webpack bundle
+npm run build:cli           # Compile CLI to dist/src/cli.js
 npm run webpack             # Development Webpack bundle (no type-check)
 npm run clean               # Remove ./out
 npm run bump-build          # Bump version + production build
 npm run clean-build-install # Full clean → bump → build → install
 npm run install-extension   # Install .vsix via node build.js
 npm run release             # standard-version release
+```
+
+### CLI usage
+
+```bash
+node dist/src/cli.js structure <dir>              # Folder structure only
+node dist/src/cli.js content <dir>                # Folder structure + all file contents
+node dist/src/cli.js file <file...>               # File(s) content with path header
+node dist/src/cli.js file --line-numbers <file...># File(s) with line numbers
+node dist/src/cli.js folder <dir>                 # All files in folder (plain)
+node dist/src/cli.js folder --line-numbers <dir>  # All files with line numbers
+node dist/src/cli.js folder --diagnostics <dir>   # All files with diagnostics (returns none in CLI)
+node dist/src/cli.js multi <file...>              # Multiple files concatenated
+
+# Output goes to stdout — pipe to your clipboard tool
+node dist/src/cli.js content src/ | clip          # Windows
+node dist/src/cli.js content src/ | pbcopy        # macOS
 ```
 
 ---

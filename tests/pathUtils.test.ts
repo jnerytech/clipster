@@ -1,19 +1,28 @@
 import fs from "fs";
 import path from "path";
-import * as vscode from "vscode";
 import { normalizeClipboardContent, getBaseDirectory, resolveTargetPath } from "../src/pathUtils";
+import { initPlatform, Platform } from "../src/platform";
 
 jest.mock("fs");
 
 const mockFs = jest.mocked(fs);
 
+const mockPlatform = {
+  clipboard: {
+    writeText: jest.fn(() => Promise.resolve()),
+    readText: jest.fn(() => Promise.resolve("")),
+  },
+  message: { info: jest.fn(), warn: jest.fn(), error: jest.fn() },
+  getConfig: jest.fn((_key: string, defaultValue: unknown) => defaultValue),
+  getWorkspaceRoot: jest.fn<string | null, []>(() => "/mock/workspace"),
+  getDiagnostics: jest.fn(() => []),
+};
+
 describe("pathUtils", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    // restore default workspace mock
-    (
-      vscode.workspace as unknown as { workspaceFolders: { uri: { fsPath: string } }[] }
-    ).workspaceFolders = [{ uri: { fsPath: "/mock/workspace" } }];
+    initPlatform(mockPlatform as unknown as Platform);
+    mockPlatform.getWorkspaceRoot.mockReturnValue("/mock/workspace");
     // resolveTargetPath uses realpathSync to compare real paths; behave as identity in tests
     (mockFs.realpathSync as unknown as jest.Mock).mockImplementation((p: string) => p);
   });
@@ -48,8 +57,7 @@ describe("pathUtils", () => {
         isFile: () => true,
         isDirectory: () => false,
       } as unknown as fs.Stats);
-      const uri = { fsPath: "/some/dir/file.ts" } as vscode.Uri;
-      expect(getBaseDirectory(uri)).toBe("/some/dir");
+      expect(getBaseDirectory("/some/dir/file.ts")).toBe("/some/dir");
     });
 
     it("returns the path itself when it is a directory", () => {
@@ -57,18 +65,16 @@ describe("pathUtils", () => {
         isFile: () => false,
         isDirectory: () => true,
       } as unknown as fs.Stats);
-      const uri = { fsPath: "/some/dir" } as vscode.Uri;
-      expect(getBaseDirectory(uri)).toBe("/some/dir");
+      expect(getBaseDirectory("/some/dir")).toBe("/some/dir");
     });
 
     it("returns null and shows error when stat throws", () => {
       mockFs.statSync.mockImplementation(() => {
         throw new Error("ENOENT");
       });
-      const uri = { fsPath: "/nonexistent" } as vscode.Uri;
-      const result = getBaseDirectory(uri);
+      const result = getBaseDirectory("/nonexistent");
       expect(result).toBeNull();
-      expect(vscode.window.showErrorMessage).toHaveBeenCalled();
+      expect(mockPlatform.message.error).toHaveBeenCalled();
     });
   });
 
@@ -77,7 +83,7 @@ describe("pathUtils", () => {
     it("blocks absolute paths that escape the workspace", () => {
       const result = resolveTargetPath("/absolute/path/file.ts", "/base/dir");
       expect(result).toBeNull();
-      expect(vscode.window.showErrorMessage).toHaveBeenCalled();
+      expect(mockPlatform.message.error).toHaveBeenCalled();
     });
 
     it("allows absolute paths within the workspace", () => {
@@ -98,11 +104,7 @@ describe("pathUtils", () => {
     });
 
     it("returns null when no workspace and path contains separator", () => {
-      (
-        vscode.workspace as unknown as {
-          workspaceFolders: { uri: { fsPath: string } }[] | null;
-        }
-      ).workspaceFolders = null;
+      mockPlatform.getWorkspaceRoot.mockReturnValue(null);
       const result = resolveTargetPath("src/file.ts", "/base/dir");
       expect(result).toBeNull();
     });
@@ -116,7 +118,7 @@ describe("pathUtils", () => {
     it("blocks path traversal via relative separator path", () => {
       const result = resolveTargetPath("../../etc/passwd", "/base/dir");
       expect(result).toBeNull();
-      expect(vscode.window.showErrorMessage).toHaveBeenCalled();
+      expect(mockPlatform.message.error).toHaveBeenCalled();
     });
   });
 });

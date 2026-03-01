@@ -4,7 +4,7 @@ import path from "path";
 import type { Ignore } from "ignore";
 import { buildIgnoreFilter, filterIgnoredFiles } from "./ignoreHelper";
 import { formatStructure } from "./structureFormatter";
-import { showErrorMessage } from "./messageUtils";
+import { getPlatform } from "./platform";
 
 export const traverseDirectory = (
   dir: string,
@@ -23,7 +23,7 @@ export const traverseDirectory = (
   try {
     rawEntries = fs.readdirSync(dir, { withFileTypes: true });
   } catch (err) {
-    showErrorMessage(`Failed to read directory: ${(err as Error).message}`);
+    getPlatform().message.error(`Failed to read directory: ${(err as Error).message}`);
     return structure;
   }
 
@@ -90,7 +90,7 @@ export const createDirectoriesRecursively = (dirPath: string): boolean => {
     fs.mkdirSync(dirPath, { recursive: true });
     return true;
   } catch (err) {
-    showErrorMessage(`Failed to create directories: ${(err as Error).message}`);
+    getPlatform().message.error(`Failed to create directories: ${(err as Error).message}`);
     return false;
   }
 };

@@ -1,7 +1,10 @@
 // src/extension.ts
 import * as vscode from "vscode";
 import path from "path";
+import os from "os";
 import logger from "./logger";
+import { initPlatform } from "./platform";
+import { VscodePlatform } from "./platforms/vscode-platform";
 import {
   getFolderStructure,
   getFolderStructureAndContent,
@@ -12,7 +15,6 @@ import {
   copyFileContentWithLineNumbers,
   copyFolderFilesWithLineNumbers,
   copyFolderFilesWithDiagnostics,
-  copySelectionWithContext,
   copyFileContentWithDiagnostics,
   copyMultipleFilesContent,
   createFileOrFolderFromClipboard,
@@ -85,7 +87,7 @@ function registerCommands(): void {
         if (!lines.length) {
           throw new Error("Clipboard content is empty");
         }
-        await createFileOrFolderFromClipboard(lines.join("\n"), uri);
+        await createFileOrFolderFromClipboard(lines.join("\n"), uri.fsPath);
       } catch (err) {
         vscode.window.showErrorMessage(
           `Failed to create files or folders: ${(err as Error).message}`
@@ -224,7 +226,7 @@ function registerCommands(): void {
     "showCopyFileContentWithHeader",
     async (uri: vscode.Uri, uris: vscode.Uri[]) => {
       try {
-        const targets = Array.isArray(uris) ? uris : [uri];
+        const targets = (Array.isArray(uris) ? uris : [uri]).map((u) => u.fsPath);
         await copyFileContentWithPath(targets);
       } catch (err) {
         vscode.window.showErrorMessage(
@@ -244,7 +246,7 @@ function registerCommands(): void {
     "showCopyFileContentWithLineNumbers",
     async (uri: vscode.Uri, uris: vscode.Uri[]) => {
       try {
-        const targets = Array.isArray(uris) ? uris : [uri];
+        const targets = (Array.isArray(uris) ? uris : [uri]).map((u) => u.fsPath);
         await copyFileContentWithLineNumbers(targets);
       } catch (err) {
         vscode.window.showErrorMessage(
@@ -259,6 +261,8 @@ function registerCommands(): void {
     }
   );
 
+  // copySelectionWithContext is VS Code-only (active editor + text selection).
+  // It has no CLI equivalent and is kept here rather than in fileHelpers.ts.
   registerConditionalCommand(
     "clipster.copySelectionWithContext",
     "showCopySelectionWithContext",
@@ -273,7 +277,16 @@ function registerCommands(): void {
           vscode.window.showErrorMessage("No text selected.");
           return;
         }
-        await copySelectionWithContext(editor);
+        const { document, selection } = editor;
+        const filePath = document.uri.fsPath;
+        const startLine = selection.start.line + 1;
+        const endLine = selection.end.line + 1;
+        const selectedText = document.getText(selection);
+        const lang = document.languageId;
+        const header = `File: ${filePath} (lines ${startLine}-${endLine})`;
+        const content = `${header}${os.EOL}\`\`\`${lang}${os.EOL}${selectedText}${os.EOL}\`\`\``;
+        await vscode.env.clipboard.writeText(content);
+        vscode.window.showInformationMessage(`Selection (lines ${startLine}-${endLine}) copied.`);
       } catch (err) {
         vscode.window.showErrorMessage(`Failed to copy selection: ${(err as Error).message}`);
         logger.error(`Failed to copy selection: ${(err as Error).message}`, MODULE, __filename);
@@ -286,7 +299,7 @@ function registerCommands(): void {
     "showCopyFileContentWithDiagnostics",
     async (uri: vscode.Uri, uris: vscode.Uri[]) => {
       try {
-        const targets = Array.isArray(uris) ? uris : [uri];
+        const targets = (Array.isArray(uris) ? uris : [uri]).map((u) => u.fsPath);
         await copyFileContentWithDiagnostics(targets);
       } catch (err) {
         vscode.window.showErrorMessage(
@@ -306,7 +319,7 @@ function registerCommands(): void {
     "showCopyMultipleFilesContent",
     async (uri: vscode.Uri, uris: vscode.Uri[]) => {
       try {
-        const targets = Array.isArray(uris) ? uris : [uri];
+        const targets = (Array.isArray(uris) ? uris : [uri]).map((u) => u.fsPath);
         await copyMultipleFilesContent(targets);
       } catch (err) {
         vscode.window.showErrorMessage(`Failed to copy multiple files: ${(err as Error).message}`);
@@ -324,7 +337,7 @@ function registerCommands(): void {
     "showCopyFolderFilesWithLineNumbers",
     async (uri: vscode.Uri) => {
       try {
-        await copyFolderFilesWithLineNumbers(uri, allIgnores);
+        await copyFolderFilesWithLineNumbers(uri.fsPath, allIgnores);
       } catch (err) {
         vscode.window.showErrorMessage(
           `Failed to copy folder files with line numbers: ${(err as Error).message}`
@@ -343,7 +356,7 @@ function registerCommands(): void {
     "showCopyFolderFilesWithDiagnostics",
     async (uri: vscode.Uri) => {
       try {
-        await copyFolderFilesWithDiagnostics(uri, allIgnores);
+        await copyFolderFilesWithDiagnostics(uri.fsPath, allIgnores);
       } catch (err) {
         vscode.window.showErrorMessage(
           `Failed to copy folder files with diagnostics: ${(err as Error).message}`
@@ -362,6 +375,7 @@ function registerCommands(): void {
 
 export function activate(context: vscode.ExtensionContext): void {
   logger.log("Clipster is activating…", MODULE, __filename);
+  initPlatform(new VscodePlatform());
   registerCommands();
 
   context.subscriptions.push(

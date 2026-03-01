@@ -7,14 +7,27 @@ import {
   copyFileToClipboard,
   pasteFileFromClipboard,
 } from "../src/fileUtils";
+import { initPlatform, Platform } from "../src/platform";
 
 jest.mock("fs");
 
 const mockFs = jest.mocked(fs);
 
+const mockPlatform = {
+  clipboard: {
+    writeText: jest.fn(() => Promise.resolve()),
+    readText: jest.fn(() => Promise.resolve("")),
+  },
+  message: { info: jest.fn(), warn: jest.fn(), error: jest.fn() },
+  getConfig: jest.fn((_key: string, defaultValue: unknown) => defaultValue),
+  getWorkspaceRoot: jest.fn<string | null, []>(() => "/mock/workspace"),
+  getDiagnostics: jest.fn(() => []),
+};
+
 describe("fileUtils", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    initPlatform(mockPlatform as unknown as Platform);
     (vscode.env.clipboard.writeText as jest.Mock).mockResolvedValue(undefined);
     (vscode.env.clipboard.readText as jest.Mock).mockResolvedValue("");
     // pasteFileFromClipboard uses realpathSync to compare real paths; behave as identity in tests
@@ -57,7 +70,7 @@ describe("fileUtils", () => {
       });
       const content = readFileContent("/bad/path.ts");
       expect(content).toBe("");
-      expect(vscode.window.showErrorMessage).toHaveBeenCalled();
+      expect(mockPlatform.message.error).toHaveBeenCalled();
     });
   });
 
