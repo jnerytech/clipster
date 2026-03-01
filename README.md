@@ -97,7 +97,6 @@ You can customize Clipster's behavior through the following settings in the VS C
 - **Clipster: Show Copy Root Folder Structure and Content** (`clipster.showCopyRootFolderStructureAndContent`): Enable or disable copying the root folder structure along with content.
 - **Clipster: Max Root Files** (`clipster.maxRootFiles`): Sets the maximum number of files that can be copied from the root folder (default: 10).
 - **Clipster: Max Root Size KB** (`clipster.maxRootSizeKB`): Sets the maximum total size (in KB) for copied root files (default: 500KB).
-- **Clipster: Show in Clipster Submenu** (`clipster.showInClipsterSubmenu`): Show Clipster commands in a submenu or directly in the root menu.
 - **Clipster: Additional Ignores** (`clipster.additionalIgnores`): Add custom file patterns to ignore when copying folder structures.
 - **Clipster: Show Copy File Content with Line Numbers** (`clipster.showCopyFileContentWithLineNumbers`): Enable or disable copying file content with line numbers.
 - **Clipster: Show Copy Selection with Context** (`clipster.showCopySelectionWithContext`): Enable or disable copying the selected text with file path and line range.
@@ -107,6 +106,55 @@ You can customize Clipster's behavior through the following settings in the VS C
 ## Ignoring Files
 
 Clipster respects `.gitignore` files when copying folder structures. You can also add custom ignore patterns using the **Clipster: Additional Ignores** setting to tailor the output to your needs.
+
+## CLI Usage
+
+Clipster's core commands are also available as a Node.js CLI. Output goes to **stdout** so you can pipe it directly to your clipboard tool.
+
+### Build the CLI
+
+```bash
+npm run build:cli
+```
+
+This compiles the CLI to `dist/src/cli.js`.
+
+### Commands
+
+| Command                                  | Description                                     |
+| ---------------------------------------- | ----------------------------------------------- |
+| `clipster structure <dir>`               | Folder structure (tree view, no file contents)  |
+| `clipster content <dir>`                 | Folder structure + all file contents            |
+| `clipster file <file...>`                | File(s) content with path header                |
+| `clipster file --line-numbers <file...>` | File(s) with line numbers                       |
+| `clipster file --diagnostics <file...>`  | File(s) with diagnostics (always "none" in CLI) |
+| `clipster folder <dir>`                  | All files in folder with line numbers           |
+| `clipster folder --line-numbers <dir>`   | All files in folder with line numbers           |
+| `clipster folder --diagnostics <dir>`    | All files in folder with diagnostics            |
+| `clipster multi <file...>`               | Multiple files concatenated with separators     |
+
+### Examples
+
+```bash
+# Pipe folder structure to clipboard
+node dist/src/cli.js structure src/      | clip       # Windows
+node dist/src/cli.js structure src/      | pbcopy     # macOS
+node dist/src/cli.js structure src/      | xclip -selection clipboard  # Linux
+
+# Copy a single file with its path header
+node dist/src/cli.js file src/extension.ts | clip
+
+# Copy multiple files concatenated
+node dist/src/cli.js multi src/platform.ts src/fileHelpers.ts | pbcopy
+
+# Copy all files in a folder with line numbers
+node dist/src/cli.js folder src/ | clip
+
+# Copy entire project structure + all file contents
+node dist/src/cli.js content src/ | clip
+```
+
+> **Note:** Diagnostics are always reported as "none" in CLI mode — diagnostics require a running VS Code instance with language servers active.
 
 ## Installation
 
@@ -121,6 +169,7 @@ Run `npm run clean-build-install` to build and install the extension locally.
 - **test**: Runs the Jest tests.
 - **webpack**: Builds the project in development mode.
 - **build**: Creates a production build using Webpack.
+- **build:cli**: Compiles the CLI entry point to `dist/src/cli.js`.
 - **clean**: Removes the `OUT` directory.
 - **bump-build**: Updates the version and builds the extension.
 - **clean-build-install**: Cleans, builds, and installs the extension.
