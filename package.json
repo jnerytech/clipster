@@ -109,11 +109,6 @@
           "default": true,
           "description": "Enable pasting copied files into directories."
         },
-        "clipster.showCopyFileContents": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable copying file contents only."
-        },
         "clipster.showCopyFileContentWithLineNumbers": {
           "type": "boolean",
           "default": true,
@@ -138,11 +133,6 @@
           "type": "boolean",
           "default": true,
           "description": "Enable Copy All Files with Line Numbers for folders."
-        },
-        "clipster.showInClipsterSubmenu": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show Clipster commands in submenu."
         },
         "clipster.defaultIgnores": {
           "type": "array",
@@ -239,6 +229,10 @@
       {
         "id": "clipsterMenu",
         "label": "Clipster"
+      },
+      {
+        "id": "clipsterMenu.copyRoot",
+        "label": "Root Folder"
       }
     ],
     "menus": {
@@ -255,36 +249,18 @@
         },
         {
           "command": "clipster.copyFolderStructure",
-          "group": "2_copy"
+          "group": "2_copy",
+          "when": "explorerResourceIsFolder"
         },
         {
           "command": "clipster.copyFolderStructureAndContent",
-          "group": "2_copy"
+          "group": "2_copy",
+          "when": "explorerResourceIsFolder"
         },
         {
           "command": "clipster.copyFileContentWithHeader",
-          "group": "2_copy"
-        },
-        {
-          "command": "clipster.copyRootFolderPath",
-          "group": "3_copyRoot"
-        },
-        {
-          "command": "clipster.copyRootFolderStructure",
-          "group": "3_copyRoot"
-        },
-        {
-          "command": "clipster.copyRootFolderStructureAndContent",
-          "group": "3_copyRoot"
-        },
-        {
-          "command": "clipster.copyFile",
-          "group": "4_file"
-        },
-        {
-          "command": "clipster.pasteFile",
-          "group": "4_file",
-          "when": "explorerResourceIsFolder"
+          "group": "2_copy",
+          "when": "!explorerResourceIsFolder"
         },
         {
           "command": "clipster.copyFileContentWithLineNumbers",
@@ -305,6 +281,33 @@
           "command": "clipster.copyFolderFilesWithLineNumbers",
           "group": "2_copy",
           "when": "explorerResourceIsFolder"
+        },
+        {
+          "submenu": "clipsterMenu.copyRoot",
+          "group": "3_copyRoot"
+        },
+        {
+          "command": "clipster.copyFile",
+          "group": "4_file"
+        },
+        {
+          "command": "clipster.pasteFile",
+          "group": "4_file",
+          "when": "explorerResourceIsFolder"
+        }
+      ],
+      "clipsterMenu.copyRoot": [
+        {
+          "command": "clipster.copyRootFolderPath",
+          "group": "1_root"
+        },
+        {
+          "command": "clipster.copyRootFolderStructure",
+          "group": "1_root"
+        },
+        {
+          "command": "clipster.copyRootFolderStructureAndContent",
+          "group": "1_root"
         }
       ],
       "editor/context": [
