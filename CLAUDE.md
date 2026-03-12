@@ -7,7 +7,7 @@
 - **Version**: see `package.json` (authoritative; any `.version` file is legacy/stale and not used)
 - **VS Code engine**: `^1.93.0`
 - **Entry point**: `src/extension.ts` → compiled to `dist/extension.js`
-- **Repository**: https://github.com/TheJesper/clipster
+- **Repository**: https://github.com/jnerytech/clipster (forked from https://github.com/TheJesper/clipster)
 
 ---
 
@@ -90,6 +90,8 @@ npm run bump-build          # Bump version + production build
 npm run clean-build-install # Full clean → bump → build → install
 npm run install-extension   # Install .vsix via node build.js
 npm run release             # standard-version release
+npm run format              # Format all files with Prettier
+npm run format:check        # Check formatting without writing
 ```
 
 ### CLI usage
@@ -189,6 +191,7 @@ It uses the [`ignore`](https://www.npmjs.com/package/ignore) npm package to appl
 
 | Package                                       | Use                                                |
 | --------------------------------------------- | -------------------------------------------------- |
+| `commander`                                   | CLI argument parsing (used in `cli.ts`)            |
 | `ignore`                                      | gitignore-style file filtering                     |
 | `picomatch`                                   | Glob matching                                      |
 | `webpack` + `ts-loader`                       | Build/transpile                                    |
@@ -198,9 +201,16 @@ It uses the [`ignore`](https://www.npmjs.com/package/ignore) npm package to appl
 | `jest`                                        | Unit testing                                       |
 | `standard-version`                            | Versioning/changelog                               |
 | `@vscode/vsce`                                | Package and publish the extension                  |
+| `husky` + `lint-staged`                       | Git pre-commit hooks (runs Prettier on staged files) |
+| `prettier`                                    | Code formatter                                     |
+| `eslint`                                      | Linting                                            |
 
 ---
 
 ## Known Issues / Gotchas
 
 1. **Context menu groups**: Commands are grouped in the `clipsterMenu` submenu by group strings (`1_create`, `2_copy`, `3_copyRoot`, `4_file`). The root-folder commands live in a nested `clipsterMenu.copyRoot` submenu. File-only and folder-only commands use `when` clauses (`!explorerResourceIsFolder` / `explorerResourceIsFolder`) to show only in the relevant context.
+
+2. **Editor context menu**: `clipster.copySelectionWithContext` also registers in `editor/context` under group `9_cutcopypaste` with `when: editorHasSelection` — it appears in the right-click menu inside the editor, not just the Explorer.
+
+3. **`prepack` hook**: Running `npm install -g .` automatically triggers `build:cli` via the `prepack` npm lifecycle hook, so the CLI binary is always compiled before packaging.

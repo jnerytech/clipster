@@ -1,6 +1,6 @@
 # Clipster
 
-A minimal VS Code extension to copy file paths, folder structures, and file contents from the Explorer to the clipboard — perfect for sharing context with ChatGPT, Gemini, Perplexity, or other humans.
+A minimal VS Code extension to copy file paths, folder structures, and file contents from the Explorer to the clipboard — perfect for sharing context with Claude, ChatGPT, Gemini, Perplexity, or other AI tools and humans.
 
 ## Features
 
@@ -43,7 +43,9 @@ Search for **Clipster** in the VS Code Extensions panel, or install locally:
 npm run clean-build-install
 ```
 
-[GitHub Repository](https://github.com/TheJesper/clipster)
+[GitHub Repository](https://github.com/jnerytech/clipster)
+
+> Forked from [TheJesper/clipster](https://github.com/TheJesper/clipster)
 
 ## License
 
