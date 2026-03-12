@@ -189,21 +189,21 @@ It uses the [`ignore`](https://www.npmjs.com/package/ignore) npm package to appl
 
 ## Key Dependencies
 
-| Package                                       | Use                                                |
-| --------------------------------------------- | -------------------------------------------------- |
-| `commander`                                   | CLI argument parsing (used in `cli.ts`)            |
-| `ignore`                                      | gitignore-style file filtering                     |
-| `picomatch`                                   | Glob matching                                      |
-| `webpack` + `ts-loader`                       | Build/transpile                                    |
-| `copy-webpack-plugin`                         | Copy `resources/` assets into `dist/` during build |
-| `ts-jest`                                     | Jest TypeScript transform                          |
-| `@types/jest`, `@types/node`, `@types/vscode` | TypeScript type definitions                        |
-| `jest`                                        | Unit testing                                       |
-| `standard-version`                            | Versioning/changelog                               |
-| `@vscode/vsce`                                | Package and publish the extension                  |
+| Package                                       | Use                                                  |
+| --------------------------------------------- | ---------------------------------------------------- |
+| `commander`                                   | CLI argument parsing (used in `cli.ts`)              |
+| `ignore`                                      | gitignore-style file filtering                       |
+| `picomatch`                                   | Glob matching                                        |
+| `webpack` + `ts-loader`                       | Build/transpile                                      |
+| `copy-webpack-plugin`                         | Copy `resources/` assets into `dist/` during build   |
+| `ts-jest`                                     | Jest TypeScript transform                            |
+| `@types/jest`, `@types/node`, `@types/vscode` | TypeScript type definitions                          |
+| `jest`                                        | Unit testing                                         |
+| `standard-version`                            | Versioning/changelog                                 |
+| `@vscode/vsce`                                | Package and publish the extension                    |
 | `husky` + `lint-staged`                       | Git pre-commit hooks (runs Prettier on staged files) |
-| `prettier`                                    | Code formatter                                     |
-| `eslint`                                      | Linting                                            |
+| `prettier`                                    | Code formatter                                       |
+| `eslint`                                      | Linting                                              |
 
 ---
 
