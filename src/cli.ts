@@ -26,7 +26,7 @@ const program = new Command();
 program
   .name("clipster")
   .description("Copy file paths, folder structures, and file contents to stdout.")
-  .version("1.0.2");
+  .version("1.0.31");
 
 program
   .command("structure <dir>")
