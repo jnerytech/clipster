@@ -20,10 +20,6 @@
   "bin": {
     "clipster": "./dist/src/cli.js"
   },
-  "files": [
-    "dist/src/",
-    "README.md"
-  ],
   "scripts": {
     "test": "jest --coverage",
     "test:quick": "jest --onlyChanged",

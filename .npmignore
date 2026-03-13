@@ -1,0 +1,24 @@
+# Include only CLI-relevant files for npm publish
+src/
+out/
+tests/
+.git/
+.github/
+.husky/
+.claude/
+.vscode/
+node_modules/
+tsconfig*.json
+webpack.config.cjs
+jest.config.js
+build.js
+.eslintrc*
+.prettierrc*
+.prettierignore
+.editorconfig
+.gitattributes
+.vscodeignore
+PLAN.md
+CLAUDE.md
+contributes.json
+*.vsix
