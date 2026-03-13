@@ -49,6 +49,14 @@ Clipster merges three sources of ignore patterns when traversing folders:
 
 Patterns follow [gitignore syntax](https://git-scm.com/docs/gitignore) via the [`ignore`](https://www.npmjs.com/package/ignore) package.
 
+### Dot-folder toggle
+
+| Setting                     | Default | Description                                                                         |
+| --------------------------- | ------- | ----------------------------------------------------------------------------------- |
+| `clipster.ignoreDotFolders` | `true`  | Ignore all folders whose names start with `.` (e.g. `.github`, `.vscode`, `.husky`) |
+
+When enabled, any folder starting with a period is excluded from copied output. Set to `false` to include dot-folders.
+
 ### Default ignore list
 
 ```json
