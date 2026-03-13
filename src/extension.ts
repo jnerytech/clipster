@@ -48,7 +48,12 @@ function registerCommands(): void {
   const config = vscode.workspace.getConfiguration("clipster");
   const defaultIgnores = config.get<string[]>("defaultIgnores", []);
   const additionalIgnores = config.get<string[]>("additionalIgnores", []);
-  const allIgnores = [...defaultIgnores, ...additionalIgnores];
+  const ignoreDotFolders = config.get<boolean>("ignoreDotFolders", true);
+  const allIgnores = [
+    ...defaultIgnores,
+    ...additionalIgnores,
+    ...(ignoreDotFolders ? [".*/"] : []),
+  ];
 
   disposables.forEach((d) => d.dispose());
   disposables = [];
